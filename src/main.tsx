@@ -14,7 +14,6 @@ if (import.meta.env.DEV) {
     ["batchStart", CONFIG.batchStart],
   ].filter(([, v]) => isTodo(v));
   if (pending.length) console.warn("[NextBuildBD] config.ts TODO values:", pending.map(([k]) => k).join(", "));
-  if (!import.meta.env.VITE_SUPABASE_URL) console.warn("[NextBuildBD] Supabase not configured (.env) — see README.");
 }
 
 const root = createRoot(document.getElementById("root")!);

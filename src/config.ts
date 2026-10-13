@@ -47,6 +47,16 @@ export const CONFIG = {
     facebook: "https://facebook.com/ashraf.arif2000",
   },
 
+  /**
+   * Supabase project (student dashboard + admin). The publishable key is meant to be public — it
+   * ships in the browser bundle anyway, and row-level security protects the data. Never put the
+   * secret / service_role key here. VITE_SUPABASE_URL / VITE_SUPABASE_PUBLISHABLE_KEY override these.
+   */
+  supabase: {
+    url: "https://mlwbzmsitqtycminapwd.supabase.co",
+    publishableKey: "sb_publishable_DnSDLasTUWbYE2UcOj-0bA_Ou_Yy1Fu",
+  },
+
   site: {
     url: "https://nextbuildbd.com", // TODO: final production domain (used in SEO tags)
     copyrightYear: 2026,

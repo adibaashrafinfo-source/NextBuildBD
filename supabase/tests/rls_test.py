@@ -11,13 +11,16 @@ import sys
 HERE = os.path.dirname(os.path.abspath(__file__))
 HOST, PORT = os.environ.get("PGHOST", "localhost"), os.environ.get("PGPORT", "5432")
 DB = "nbbd_test"
-MIGRATION = os.path.join(HERE, "..", "migrations", "20261013000000_phase2_dashboard.sql")
+MIGRATIONS_DIR = os.path.join(HERE, "..", "migrations")
+MIGRATIONS = sorted(os.path.join(MIGRATIONS_DIR, f) for f in os.listdir(MIGRATIONS_DIR) if f.endswith(".sql"))
 STUB = os.path.join(HERE, "supabase_stub.sql")
 
 ADMIN = "aaaaaaaa-0000-0000-0000-000000000001"
 STUDENT = "aaaaaaaa-0000-0000-0000-000000000002"  # verified enrollment
 PENDING = "aaaaaaaa-0000-0000-0000-000000000003"  # pending enrollment
 UNCONF = "aaaaaaaa-0000-0000-0000-000000000004"  # verified enrollment but email not confirmed
+OWNER = "aaaaaaaa-0000-0000-0000-000000000005"  # admin via public.admin_emails (seeded by migration)
+OWNER_UNCONF = "aaaaaaaa-0000-0000-0000-000000000006"  # listed email, but not confirmed
 
 
 def psql(sql, db=DB):
@@ -40,7 +43,7 @@ def as_role(role, uid, sql, email=None):
 
 subprocess.run(["psql", "-h", HOST, "-p", PORT, "-U", "postgres", "-X", "-q", "-c", f"drop database if exists {DB}"], check=True)
 subprocess.run(["psql", "-h", HOST, "-p", PORT, "-U", "postgres", "-X", "-q", "-c", f"create database {DB}"], check=True)
-for f in (STUB, MIGRATION):
+for f in (STUB, *MIGRATIONS):
     r = subprocess.run(["psql", "-h", HOST, "-p", PORT, "-U", "postgres", "-d", DB, "-X", "-q", "-v", "ON_ERROR_STOP=1", "-f", f], capture_output=True, text=True)
     if r.returncode:
         print(f"FAILED applying {f}:\n{r.stderr}")
@@ -53,7 +56,10 @@ insert into auth.users values
  ('{ADMIN}', 'admin@example.com', now()),
  ('{STUDENT}', 'Student@Example.com', now()),
  ('{PENDING}', 'p@example.com', now()),
- ('{UNCONF}', 'u@example.com', null);
+ ('{UNCONF}', 'u@example.com', null),
+ ('{OWNER}', 'AsrafulIslam2000@gmail.com', now()),
+ ('{OWNER_UNCONF}', 'second-admin@example.com', null);
+insert into public.admin_emails values ('second-admin@example.com');
 insert into public.admins values ('{ADMIN}');
 insert into public.enrollments (full_name, phone, email, payment_method, sender_number, trx_id, amount, status) values
  ('Student', '01712345678', 'student@example.com', 'bkash', '01712345678', 'TRXSTUDENT1', 1499, 'verified'),
@@ -122,6 +128,11 @@ cases = [
      "with u as (update public.course_settings set meet_link = 'https://meet.google.com/xyz' returning 1) select count(*) from u", "=1"),
     ("admin cannot insert a second settings row", "authenticated", ADMIN, "insert into public.course_settings (id) values (true)", "err:permission denied"),
 
+    ("owner email (admin_emails, confirmed, any case) is admin", "authenticated", OWNER, "select public.is_admin()", "=t"),
+    ("owner sees all enrollments", "authenticated", OWNER, "select count(*) from public.enrollments", "=6"),
+    ("listed but unconfirmed email is not admin", "authenticated", OWNER_UNCONF, "select public.is_admin()", "=f"),
+    ("nobody reads admin_emails", "authenticated", OWNER, "select count(*) from public.admin_emails", "err:permission denied"),
+    ("anon cannot read admin_emails", "anon", None, "select count(*) from public.admin_emails", "err:permission denied"),
     ("verified-now student gains access", "authenticated", PENDING, "select public.has_access()", "=t"),
     ("verified-now student sees classes", "authenticated", PENDING, "select count(*) from public.classes", "=1"),
 ]

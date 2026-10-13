@@ -1,5 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
-import type { PaymentMethod } from "@/config";
+import { CONFIG, type PaymentMethod } from "@/config";
 
 /**
  * Browser Supabase client. Only the publishable (anon) key belongs here; every table is
@@ -7,8 +7,8 @@ import type { PaymentMethod } from "@/config";
  * (`await import("@/lib/supabase")`) from landing-page code so supabase-js stays out of
  * the first chunk.
  */
-const url = import.meta.env.VITE_SUPABASE_URL;
-const key = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+const url = import.meta.env.VITE_SUPABASE_URL || CONFIG.supabase.url;
+const key = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || CONFIG.supabase.publishableKey;
 
 export const isSupabaseConfigured = Boolean(url && key);
 
