@@ -1,6 +1,6 @@
 import { useId, useRef, useState, type FormEvent, type ReactNode } from "react";
 import { AnimatePresence, m } from "framer-motion";
-import { Check, CheckCircle2, Copy, Loader2, Send } from "lucide-react";
+import { AlertTriangle, Check, CheckCircle2, Copy, LayoutDashboard, Loader2, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { WhatsAppIcon } from "@/components/shared/BrandIcons";
 import { Reveal } from "@/components/shared/Reveal";
@@ -8,6 +8,8 @@ import { SectionHeading } from "@/components/shared/SectionHeading";
 import { CONFIG, PAYMENT_LABELS, type PaymentMethod } from "@/config";
 import { cn, formatPhone, priceLabel, toBanglaNumber, waLink } from "@/lib/utils";
 import { BD_PHONE, EMAIL, ROCKET_ACCOUNT, TRX_ID, normalizePhone } from "@/lib/validation";
+import { inputClass } from "@/components/ui/input";
+import type { EnrollmentInsert } from "@/lib/supabase";
 
 /* ------------------------------------------------------------------ */
 /* Validation                                                          */
@@ -211,6 +213,8 @@ function EnrollForm() {
   const [errors, setErrors] = useState<Errors>({});
   const [touched, setTouched] = useState<Partial<Record<keyof FormValues, boolean>>>({});
   const [status, setStatus] = useState<"idle" | "submitting" | "success">("idle");
+  const [submitError, setSubmitError] = useState<"duplicate" | "failed" | null>(null);
+  const [submittedEmail, setSubmittedEmail] = useState("");
   const formRef = useRef<HTMLFormElement>(null);
 
   const set = <K extends keyof FormValues>(key: K, value: FormValues[K]) => {
@@ -235,27 +239,45 @@ function EnrollForm() {
     }
 
     setStatus("submitting");
-    const payload = {
+    setSubmitError(null);
+    // status (pending), submitted_at and review fields are set by the database.
+    const payload: EnrollmentInsert = {
       full_name: values.fullName.trim(),
       phone: normalizePhone(values.phone),
       email: values.email.trim().toLowerCase(),
-      payment_method: values.method,
+      payment_method: values.method as PaymentMethod,
       sender_number: normalizePhone(values.senderNumber),
       trx_id: values.trxId.trim().toUpperCase(),
       amount: CONFIG.price,
-      status: "pending",
-      submitted_at: new Date().toISOString(),
     };
 
-    // TODO: Supabase insert into enrollments
-    // const { error } = await supabase.from("enrollments").insert(payload);
-    // if (error) { show an error state and return; }
-    console.log("[NextBuildBD] Enrollment submitted:", payload);
+    try {
+      // Loaded on demand so supabase-js never weighs on the landing page's first load.
+      const { supabase, UNIQUE_VIOLATION } = await import("@/lib/supabase");
+      if (!supabase) {
+        if (!import.meta.env.DEV) throw new Error("Supabase is not configured");
+        console.log("[NextBuildBD] Supabase not configured — enrollment NOT saved:", payload);
+      } else {
+        // Insert only: anonymous visitors may not read enrollments back (RLS), so no .select().
+        const { error } = await supabase.from("enrollments").insert(payload);
+        if (error) {
+          setSubmitError(error.code === UNIQUE_VIOLATION ? "duplicate" : "failed");
+          setStatus("idle");
+          return;
+        }
+      }
+    } catch {
+      setSubmitError("failed");
+      setStatus("idle");
+      return;
+    }
 
+    setSubmittedEmail(payload.email);
     setStatus("success");
   };
 
   const reset = () => {
+    setSubmitError(null);
     setValues(EMPTY);
     setErrors({});
     setTouched({});
@@ -285,9 +307,20 @@ function EnrollForm() {
             <p className="max-w-sm text-lg font-semibold text-text">
               আপনার তথ্য জমা হয়েছে। যাচাই শেষে ড্যাশবোর্ড চালু হবে।
             </p>
-            <Button variant="secondary" onClick={reset}>
-              আরেকটি জমা দিন
-            </Button>
+            <p className="max-w-sm text-text-muted">
+              এই ইমেইল দিয়ে লগইন করে পেমেন্টের স্ট্যাটাস দেখুন:{" "}
+              <span className="num break-all font-semibold text-text">{submittedEmail}</span>
+            </p>
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <Button asChild>
+                <a href={`/login?email=${encodeURIComponent(submittedEmail)}`}>
+                  <LayoutDashboard aria-hidden /> ড্যাশবোর্ডে লগইন করুন
+                </a>
+              </Button>
+              <Button variant="secondary" onClick={reset}>
+                আরেকটি জমা দিন
+              </Button>
+            </div>
           </m.div>
         ) : (
           <m.form
@@ -392,6 +425,32 @@ function EnrollForm() {
               )}
             </Field>
 
+            {submitError && (
+              <div role="alert" className="flex items-start gap-2 rounded-xl border border-danger p-3 text-[15px] text-text">
+                <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-danger" aria-hidden />
+                <p>
+                  {submitError === "duplicate"
+                    ? "এই TrxID দিয়ে আগেই জমা দেওয়া হয়েছে। স্ট্যাটাস দেখতে "
+                    : "জমা দেওয়া যায়নি। ইন্টারনেট সংযোগ দেখে আবার চেষ্টা করুন, অথবা "}
+                  {submitError === "duplicate" ? (
+                    <a href="/login" className="font-semibold text-brand-strong underline underline-offset-4">
+                      লগইন করুন
+                    </a>
+                  ) : (
+                    <a
+                      href={waLink(CONFIG.whatsappPaymentMessage)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="font-semibold text-brand-strong underline underline-offset-4"
+                    >
+                      WhatsApp-এ TrxID পাঠান
+                    </a>
+                  )}
+                  ।
+                </p>
+              </div>
+            )}
+
             <Button type="submit" size="lg" className="mt-2 w-full" disabled={status === "submitting"}>
               {status === "submitting" ? <Loader2 className="animate-spin" aria-hidden /> : <Send aria-hidden />}
               পেমেন্ট জমা দিন
@@ -402,9 +461,6 @@ function EnrollForm() {
     </div>
   );
 }
-
-const inputClass =
-  "h-12 w-full rounded-xl border border-input bg-bg px-4 text-base text-text placeholder:text-text-muted transition-colors focus:border-brand focus:outline-none focus:ring-[3px] focus:ring-brand-soft aria-[invalid=true]:border-danger";
 
 type FieldInputProps = {
   id: string;

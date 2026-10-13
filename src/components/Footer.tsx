@@ -10,6 +10,7 @@ const QUICK_LINKS = [
   { href: "#curriculum", label: "কারিকুলাম" },
   { href: "#pricing", label: "মূল্য" },
   { href: "#faq", label: "FAQ" },
+  { href: "/login", label: "স্টুডেন্ট লগইন" },
 ];
 
 const linkClass = "inline-flex min-h-10 items-center gap-2 text-text-muted transition-colors hover:text-text";

@@ -13,7 +13,7 @@ export const CONFIG = {
 
   whatsappNumber: "8801719686459", // TODO: owner confirm
   whatsappDisplay: "01719-686459", // TODO: owner confirm (shown in footer)
-  whatsappGroupLink: "https://chat.whatsapp.com/XXXX", // TODO: replace
+  // The WhatsApp group link is private (verified students only): set it in /admin → সেটিংস.
   whatsappMessage: "আসসালামু আলাইকুম, কোর্স সম্পর্কে জানতে চাই।",
   whatsappPaymentMessage: "আসসালামু আলাইকুম, পেমেন্ট নিয়ে সাহায্য দরকার।",
 

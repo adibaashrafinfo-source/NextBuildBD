@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Menu, X } from "lucide-react";
+import { LogIn, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/shared/Logo";
 import { WhatsAppIcon } from "@/components/shared/BrandIcons";
@@ -70,6 +70,12 @@ export function Header() {
           >
             <WhatsAppIcon className="h-5 w-5" />
           </a>
+          <a
+            href="/login"
+            className="hidden h-11 items-center rounded-xl px-3 font-semibold text-text-muted transition-colors hover:text-text lg:inline-flex"
+          >
+            লগইন
+          </a>
           <Button asChild size="sm" className="px-3 sm:px-4">
             <a href="#enroll">
               <span>
@@ -104,7 +110,15 @@ export function Header() {
                 </a>
               </li>
             ))}
-            <li className="mt-2 sm:hidden">
+            <li>
+              <a
+                href="/login"
+                className="flex min-h-12 items-center gap-2 rounded-lg px-2 font-medium text-text hover:bg-brand-soft"
+              >
+                <LogIn className="h-5 w-5 text-brand-strong" aria-hidden /> স্টুডেন্ট লগইন
+              </a>
+            </li>
+            <li className="sm:hidden">
               <a
                 href={waLink()}
                 target="_blank"
