@@ -187,7 +187,6 @@ function CopyButton({ value, label }: { value: string; label: string }) {
     <button
       type="button"
       onClick={onCopy}
-      aria-label={copied ? `${label} কপি হয়েছে` : `${label} কপি করুন`}
       className={cn(
         "inline-flex h-11 shrink-0 items-center gap-1.5 rounded-xl border px-3.5 text-sm font-semibold transition-colors",
         copied
@@ -196,7 +195,9 @@ function CopyButton({ value, label }: { value: string; label: string }) {
       )}
     >
       {copied ? <Check className="h-4 w-4 text-success" aria-hidden /> : <Copy className="h-4 w-4" aria-hidden />}
+      {/* Visible text stays inside the accessible name (WCAG 2.5.3); the method name is for screen readers. */}
       <span aria-live="polite">{copied ? "কপি হয়েছে" : "Copy"}</span>
+      <span className="sr-only"> — {label}</span>
     </button>
   );
 }
@@ -211,7 +212,6 @@ function EnrollForm() {
   const [touched, setTouched] = useState<Partial<Record<keyof FormValues, boolean>>>({});
   const [status, setStatus] = useState<"idle" | "submitting" | "success">("idle");
   const formRef = useRef<HTMLFormElement>(null);
-  const successRef = useRef<HTMLDivElement>(null);
 
   const set = <K extends keyof FormValues>(key: K, value: FormValues[K]) => {
     const next = { ...values, [key]: value };
@@ -253,7 +253,6 @@ function EnrollForm() {
     console.log("[NextBuildBD] Enrollment submitted:", payload);
 
     setStatus("success");
-    requestAnimationFrame(() => successRef.current?.focus());
   };
 
   const reset = () => {
@@ -271,7 +270,8 @@ function EnrollForm() {
         {status === "success" ? (
           <m.div
             key="success"
-            ref={successRef}
+            // AnimatePresence mounts this only after the form has exited, so focus it on mount.
+            ref={(el: HTMLDivElement | null) => el?.focus()}
             tabIndex={-1}
             role="status"
             initial={{ opacity: 0, scale: 0.97 }}

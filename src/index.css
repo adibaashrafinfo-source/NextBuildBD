@@ -71,8 +71,14 @@
 @layer base {
   html {
     scroll-behavior: smooth;
-    scroll-padding-top: 80px;
+    /* header height + 8px (h-16 mobile, h-[72px] from md) */
+    scroll-padding-top: 72px;
     -webkit-text-size-adjust: 100%;
+  }
+  @media (min-width: 768px) {
+    html {
+      scroll-padding-top: 80px;
+    }
   }
   body {
     @apply bg-bg font-sans text-text antialiased;

@@ -22,7 +22,7 @@ const STARTUPS: { name: string; logo: BrandName }[] = [
 ];
 
 export function Process() {
-  const stepsRef = useRef<HTMLOListElement>(null);
+  const stepsRef = useRef<HTMLDivElement>(null);
   // The connector line draws itself as the stepper scrolls through the viewport.
   const { scrollYProgress } = useScroll({ target: stepsRef, offset: ["start 85%", "end 55%"] });
   const spring = useSpring(scrollYProgress, { stiffness: 120, damping: 24, mass: 0.4 });
@@ -41,7 +41,7 @@ export function Process() {
         </SectionHeading>
 
         {/* Horizontal stepper on desktop, vertical on mobile */}
-        <ol ref={stepsRef} className="relative grid gap-6 md:grid-cols-4 md:gap-5">
+        <div ref={stepsRef} className="relative">
           <span
             aria-hidden
             className="absolute bottom-6 left-[23px] top-6 w-0.5 bg-border md:bottom-auto md:left-[12%] md:right-[12%] md:top-[23px] md:h-0.5 md:w-auto"
@@ -58,23 +58,25 @@ export function Process() {
             style={{ scaleX: progress }}
             className="absolute left-[12%] right-[12%] top-[23px] hidden h-0.5 origin-left bg-gradient-brand md:block"
           />
-          {STEPS.map((s, i) => (
-            <Reveal
-              as="li"
-              key={s.title}
-              delay={i * 0.08}
-              className="relative flex gap-4 md:flex-col md:items-center md:text-center"
-            >
-              <span className="relative z-10 inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gradient-cta text-lg font-bold text-white ring-4 ring-bg">
-                {toBanglaNumber(i + 1)}
-              </span>
-              <span className="pt-1 md:pt-0">
-                <span className="block text-lg font-bold text-text">{s.title}</span>
-                <span className="block text-[15px] text-text-muted">{s.body}</span>
-              </span>
-            </Reveal>
-          ))}
-        </ol>
+          <ol className="relative grid gap-6 md:grid-cols-4 md:gap-5">
+            {STEPS.map((s, i) => (
+              <Reveal
+                as="li"
+                key={s.title}
+                delay={i * 0.08}
+                className="relative flex gap-4 md:flex-col md:items-center md:text-center"
+              >
+                <span className="relative z-10 inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gradient-cta text-lg font-bold text-white ring-4 ring-bg">
+                  {toBanglaNumber(i + 1)}
+                </span>
+                <span className="pt-1 md:pt-0">
+                  <span className="block text-lg font-bold text-text">{s.title}</span>
+                  <span className="block text-[15px] text-text-muted">{s.body}</span>
+                </span>
+              </Reveal>
+            ))}
+          </ol>
+        </div>
 
         <Reveal className="mx-auto mt-14 max-w-3xl">
           <div className="relative overflow-hidden rounded-3xl bg-gradient-brand p-[1.5px]">
@@ -89,7 +91,10 @@ export function Process() {
               </p>
             </div>
           </div>
-          <ul aria-label="ছোট আইডিয়া থেকে বড় প্রোডাক্ট" className="mt-10 flex flex-wrap justify-center gap-2.5 sm:gap-3">
+          <ul
+            aria-label="ছোট আইডিয়া থেকে বড় প্রোডাক্ট"
+            className="mt-10 flex flex-wrap justify-center gap-2.5 sm:gap-3"
+          >
             {STARTUPS.map((b, i) => (
               <Reveal
                 as="li"

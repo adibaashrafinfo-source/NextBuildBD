@@ -323,7 +323,7 @@ export function HeroShowcase() {
                   {data.bars.map((h, i) => (
                     <div
                       key={i}
-                      className="flex-1 rounded-t-md transition-[height] duration-700 ease-[cubic-bezier(.22,1,.36,1)]"
+                      className="flex-1 rounded-t-md transition-[height] duration-700 [transition-timing-function:cubic-bezier(.22,1,.36,1)]"
                       style={{
                         height: built ? `${h}%` : "6%",
                         transitionDelay: `${i * 45}ms`,
@@ -422,7 +422,7 @@ export function HeroShowcase() {
       {/* ---------------- Animated cursor ---------------- */}
       <div
         aria-hidden
-        className="pointer-events-none absolute left-0 top-0 z-30 transition-[transform,opacity] duration-700 ease-[cubic-bezier(.65,0,.35,1)]"
+        className="pointer-events-none absolute left-0 top-0 z-30 transition-[transform,opacity] duration-700 [transition-timing-function:cubic-bezier(.65,0,.35,1)]"
         style={{
           transform: `translate3d(${cursor.x}px, ${cursor.y}px, 0)`,
           opacity: cursor.visible ? 1 : 0,

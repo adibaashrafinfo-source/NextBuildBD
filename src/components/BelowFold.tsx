@@ -56,7 +56,8 @@ export default function BelowFold() {
     // content-visibility sections settle to real heights as they render: re-align for a few frames,
     // and once more after web fonts reflow the page.
     const align = (frames = 8) => {
-      window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 80, behavior: "instant" });
+      const header = document.querySelector("header")?.getBoundingClientRect().height ?? 72;
+      window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - header - 8, behavior: "instant" });
       if (frames > 0) requestAnimationFrame(() => align(frames - 1));
     };
     align();
