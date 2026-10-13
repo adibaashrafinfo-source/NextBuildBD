@@ -17,10 +17,12 @@ export const CONFIG = {
   whatsappMessage: "আসসালামু আলাইকুম, কোর্স সম্পর্কে জানতে চাই।",
   whatsappPaymentMessage: "আসসালামু আলাইকুম, পেমেন্ট নিয়ে সাহায্য দরকার।",
 
+  /** Digits only (what the Copy button copies); shown formatted as 01719-686459. */
   payment: {
-    bkash: { number: "01XXXXXXXXX", type: "Personal / Send Money" }, // TODO
-    nagad: { number: "01XXXXXXXXX", type: "Personal / Send Money" }, // TODO
-    rocket: { number: "01XXXXXXXXXX", type: "Personal / Send Money" }, // TODO
+    bkash: { number: "01719686459", type: "Personal / Send Money" },
+    nagad: { number: "01719686459", type: "Personal / Send Money" },
+    // TODO: owner confirm — Rocket accounts are usually the mobile number + 1 extra check digit (12 digits)
+    rocket: { number: "01719686459", type: "Personal / Send Money" },
   },
 
   liveClass: { platform: "Google Meet", schedule: "TODO: দিন ও সময়" }, // TODO
@@ -34,7 +36,8 @@ export const CONFIG = {
 
   instructor: {
     name: "Ashraful Islam (Arif)",
-    photo: "/instructor.jpg", // TODO: replace public/instructor.jpg with the real photo
+    photo: "/instructor.webp",
+    photoFallback: "/instructor.jpg",
     facebook: "https://facebook.com/ashraf.arif2000",
     website: "https://abrarit.com",
   },

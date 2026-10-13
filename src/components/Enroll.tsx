@@ -6,7 +6,7 @@ import { WhatsAppIcon } from "@/components/shared/BrandIcons";
 import { Reveal } from "@/components/shared/Reveal";
 import { SectionHeading } from "@/components/shared/SectionHeading";
 import { CONFIG, PAYMENT_LABELS, type PaymentMethod } from "@/config";
-import { cn, priceLabel, toBanglaNumber, waLink } from "@/lib/utils";
+import { cn, formatPhone, priceLabel, toBanglaNumber, waLink } from "@/lib/utils";
 import { BD_PHONE, EMAIL, ROCKET_ACCOUNT, TRX_ID, normalizePhone } from "@/lib/validation";
 
 /* ------------------------------------------------------------------ */
@@ -126,7 +126,7 @@ function PaymentSteps() {
                   <div className="min-w-0 leading-tight">
                     <div className="font-en font-bold text-text">{PAYMENT_LABELS[m]}</div>
                     <div className="num break-all text-[17px] font-semibold tracking-wide text-text">
-                      {CONFIG.payment[m].number}
+                      {formatPhone(CONFIG.payment[m].number)}
                     </div>
                     <div className="font-en text-xs text-text-muted">{CONFIG.payment[m].type}</div>
                   </div>

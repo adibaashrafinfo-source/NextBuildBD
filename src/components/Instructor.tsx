@@ -7,28 +7,32 @@ import { CONFIG } from "@/config";
 const prettyUrl = (url: string) => url.replace(/^https?:\/\//, "").replace(/\/$/, "");
 
 export function Instructor() {
-  const { name, photo, facebook, website } = CONFIG.instructor;
+  const { name, photo, photoFallback, facebook, website } = CONFIG.instructor;
   const [photoFailed, setPhotoFailed] = useState(false);
 
   return (
     <section aria-labelledby="instructor-title" className="section bg-bg-soft">
       <div className="container max-w-5xl">
-        <Reveal className="card grid items-center gap-8 p-6 sm:p-8 md:grid-cols-[240px_1fr] md:gap-10 md:p-10">
-          <div className="mx-auto w-full max-w-[240px]">
-            <div className="rounded-3xl bg-gradient-brand p-[2px]">
+        <Reveal className="card grid items-center gap-8 p-6 sm:p-8 md:grid-cols-[260px_1fr] md:gap-10 md:p-10">
+          <div className="relative mx-auto w-full max-w-[260px]">
+            <div aria-hidden className="absolute -inset-4 rounded-[36px] bg-gradient-brand opacity-30 blur-2xl" />
+            <div className="relative rounded-3xl bg-gradient-brand p-[2px] shadow-card">
               {photo && !photoFailed ? (
-                <img
-                  src={photo}
-                  alt={`${name} — ইনস্ট্রাক্টর`}
-                  width={480}
-                  height={480}
-                  loading="lazy"
-                  decoding="async"
-                  onError={() => setPhotoFailed(true)}
-                  className="aspect-square w-full rounded-[22px] bg-bg-soft object-cover"
-                />
+                <picture>
+                  <source srcSet={photo} type="image/webp" />
+                  <img
+                    src={photoFallback}
+                    alt={`${name} — ইনস্ট্রাক্টর`}
+                    width={640}
+                    height={800}
+                    loading="lazy"
+                    decoding="async"
+                    onError={() => setPhotoFailed(true)}
+                    className="aspect-[4/5] w-full rounded-[22px] bg-white object-cover object-top"
+                  />
+                </picture>
               ) : (
-                <div className="flex aspect-square w-full items-center justify-center rounded-[22px] bg-brand-soft text-brand-strong">
+                <div className="flex aspect-[4/5] w-full items-center justify-center rounded-[22px] bg-brand-soft text-brand-strong">
                   <UserRound className="h-20 w-20" aria-hidden />
                 </div>
               )}

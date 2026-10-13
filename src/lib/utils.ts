@@ -20,3 +20,6 @@ export const waLink = (message: string = CONFIG.whatsappMessage) =>
 
 /** Shows a friendly fallback on the page while a config value is still a TODO. */
 export const displayValue = (value: string, fallback = "শীঘ্রই জানানো হবে") => (isTodo(value) ? fallback : value);
+
+/** "01719686459" -> "01719-686459" (display only; copy the raw digits). */
+export const formatPhone = (n: string) => (/^\d{11,12}$/.test(n) ? `${n.slice(0, 5)}-${n.slice(5)}` : n);
