@@ -29,12 +29,11 @@ export function LoginPage({ next }: { next: string }) {
     }
     setBusy(true);
     setError(null);
-    // Students log in with their phone number from enrollment.
-    // Check if phone exists in enrollments table via Supabase RPC/direct query
+    // Students log in directly with phone number - no email/OTP sent
     try {
       const { data, error: fetchError } = await supabase!
         .from("enrollments")
-        .select("email")
+        .select("id, email")
         .eq("phone", phoneNum)
         .single();
 
@@ -44,16 +43,30 @@ export function LoginPage({ next }: { next: string }) {
         return;
       }
 
-      // Sign in with the student's email from enrollment
-      const { error: signError } = await supabase!.auth.signInWithOtp({
-        email: data.email,
-        options: { emailRedirectTo: `${window.location.origin}${next}` },
-      });
+      // Call the student-login Edge Function to create a direct session
+      const response = await fetch(
+        `${supabase!.supabaseUrl}/functions/v1/student-login`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${supabase!.auth.session()?.access_token || ""}`,
+          },
+          body: JSON.stringify({ phone: phoneNum }),
+        }
+      );
 
-      if (signError) {
-        setError("লগইন ব্যর্থ। আবার চেষ্টা করুন।");
+      const result = await response.json();
+
+      if (!response.ok) {
+        setError(result.error || "লগইন ব্যর্থ। আবার চেষ্টা করুন।");
+        setBusy(false);
+        return;
       }
-    } catch {
+
+      // Redirect to the next page after successful login
+      window.location.href = `${window.location.origin}${next}`;
+    } catch (err) {
       setError("লগইন ব্যর্থ। আবার চেষ্টা করুন।");
     }
     setBusy(false);
