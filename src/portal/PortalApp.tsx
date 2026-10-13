@@ -86,7 +86,7 @@ export default function PortalApp() {
           <Loader2 className="h-8 w-8 animate-spin text-brand-strong" aria-hidden />
         </div>
       ) : path === "/login" ? (
-        <LoginPage next={nextPath()} />
+        <LoginPage />
       ) : path === "/admin" ? (
         <AdminPage isAdmin={isAdmin} session={session!} />
       ) : (

@@ -1,215 +1,189 @@
 import { useId, useState, type FormEvent } from "react";
-import { Loader2, Phone, Lock, LogIn } from "lucide-react";
+import { Loader2, Lock, LogIn, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/lib/supabase";
+import { EMAIL } from "@/lib/validation";
 
 /**
- * Student login: phone number (from enrollment form) → direct access.
- * Payment verification is enforced by database (RLS) — unverified students see pending status in dashboard.
+ * Email + password sign-in for students and admins alike — no magic link, no emailed code.
+ * Who sees what is decided by the database: `is_admin()` opens /admin, and a student's dashboard
+ * only unlocks once an admin marks their enrollment verified (see supabase/migrations).
  *
- * Admin login with password for direct access.
+ * Needs Auth → Providers → Email → "Confirm email" turned OFF, otherwise a new account has no
+ * session until its address is confirmed.
  */
-export function LoginPage({ next }: { next: string }) {
-  const [phone, setPhone] = useState(() => new URLSearchParams(window.location.search).get("phone") ?? "");
+
+const MIN_PASSWORD = 6;
+
+function messageFor(error: { message: string; status?: number }, mode: Mode) {
+  const m = error.message.toLowerCase();
+  if (m.includes("invalid login credentials")) return "ইমেইল বা পাসওয়ার্ড ভুল।";
+  if (m.includes("already registered") || m.includes("already exists"))
+    return "এই ইমেইলে অ্যাকাউন্ট আগে থেকেই আছে। লগইন করুন।";
+  if (m.includes("password")) return `পাসওয়ার্ড কমপক্ষে ${MIN_PASSWORD} অক্ষরের দিন।`;
+  if (m.includes("email not confirmed")) return "অ্যাকাউন্টটি এখনো চালু হয়নি। অ্যাডমিনের সাথে যোগাযোগ করুন।";
+  if (error.status === 429) return "অনেকবার চেষ্টা হয়েছে। এক মিনিট পরে আবার চেষ্টা করুন।";
+  return mode === "login" ? "লগইন করা যায়নি। আবার চেষ্টা করুন।" : "অ্যাকাউন্ট তৈরি করা যায়নি। আবার চেষ্টা করুন।";
+}
+
+type Mode = "login" | "signup";
+
+export function LoginPage() {
+  const [mode, setMode] = useState<Mode>("login");
+  const [email, setEmail] = useState(() => new URLSearchParams(window.location.search).get("email") ?? "");
   const [password, setPassword] = useState("");
-  const [step, setStep] = useState<"student" | "admin">("student");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const phoneId = useId();
+  const [notice, setNotice] = useState<string | null>(null);
+  const emailId = useId();
   const passwordId = useId();
   const errId = useId();
 
-  const loginStudent = async (e: FormEvent) => {
+  const submit = async (e: FormEvent) => {
     e.preventDefault();
-    const phoneNum = phone.trim();
-    if (!phoneNum) {
-      setError("ফোন নম্বর দিন।");
+    const value = email.trim().toLowerCase();
+    if (!EMAIL.test(value)) {
+      setError("সঠিক ইমেইল ঠিকানা দিন।");
+      return;
+    }
+    if (password.length < MIN_PASSWORD) {
+      setError(`পাসওয়ার্ড কমপক্ষে ${MIN_PASSWORD} অক্ষরের দিন।`);
       return;
     }
     setBusy(true);
     setError(null);
-    // Students log in directly with phone number - no email/OTP sent
-    try {
-      const { data, error: fetchError } = await supabase!
-        .from("enrollments")
-        .select("id, email")
-        .eq("phone", phoneNum)
-        .single();
+    setNotice(null);
 
-      if (fetchError || !data) {
-        setError("এই ফোন নম্বরে কোনো এনরোলমেন্ট খুঁজে পাওয়া যায়নি।");
-        setBusy(false);
-        return;
-      }
+    const auth = supabase!.auth;
+    const { data, error: failed } =
+      mode === "login"
+        ? await auth.signInWithPassword({ email: value, password })
+        : await auth.signUp({ email: value, password });
 
-      // Call the student-login Edge Function to create a direct session
-      const response = await fetch(
-        `${supabase!.supabaseUrl}/functions/v1/student-login`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${supabase!.auth.session()?.access_token || ""}`,
-          },
-          body: JSON.stringify({ phone: phoneNum }),
-        }
-      );
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        setError(result.error || "লগইন ব্যর্থ। আবার চেষ্টা করুন।");
-        setBusy(false);
-        return;
-      }
-
-      // Redirect to the next page after successful login
-      window.location.href = `${window.location.origin}${next}`;
-    } catch (err) {
-      setError("লগইন ব্যর্থ। আবার চেষ্টা করুন।");
-    }
     setBusy(false);
+    if (failed) {
+      setError(messageFor(failed, mode));
+      return;
+    }
+    // Sign-up only returns a session while "Confirm email" is off; say so rather than hanging.
+    if (!data.session) {
+      setNotice("অ্যাকাউন্ট তৈরি হয়েছে, কিন্তু এখনো চালু হয়নি। অ্যাডমিনের সাথে যোগাযোগ করুন।");
+      return;
+    }
+    // On success onAuthStateChange fires and PortalApp redirects to `next`.
   };
 
-  const loginWithPassword = async (e: FormEvent) => {
-    e.preventDefault();
-    if (password !== "112233") {
-      setError("পাসওয়ার্ড সঠিক নয়।");
-      return;
-    }
-    setBusy(true);
+  const switchTo = (to: Mode) => {
+    setMode(to);
     setError(null);
-    // Admin login: send OTP to admin email
-    const { error } = await supabase!.auth.signInWithOtp({
-      email: "asrafulislam2000@gmail.com",
-      options: { emailRedirectTo: `${window.location.origin}/admin` },
-    });
-    setBusy(false);
-    if (error) {
-      setError("লগইন ব্যর্থ। আবার চেষ্টা করুন।");
-    }
+    setNotice(null);
   };
 
   return (
-    <div className="flex flex-col gap-4">
-      {/* Tab buttons */}
-      <div className="flex gap-2 justify-center">
-        <Button
-          type="button"
-          variant={step === "admin" ? "primary" : "secondary"}
-          onClick={() => {
-            setStep("admin");
-            setError(null);
-            setPassword("");
-          }}
-          className="flex items-center gap-2"
-        >
-          <Lock className="h-4 w-4" aria-hidden />
-          অ্যাডমিন লগইন
-        </Button>
-        <Button
-          type="button"
-          variant={step === "admin" ? "secondary" : "primary"}
-          onClick={() => {
-            setStep("student");
-            setError(null);
-            setPhone("");
-          }}
-          className="flex items-center gap-2"
-        >
-          <Phone className="h-4 w-4" aria-hidden />
-          স্টুডেন্ট লগইন
-        </Button>
-      </div>
-
-      {/* Admin Login */}
-      {step === "admin" && (
-        <div className="card mx-auto w-full max-w-md p-6 sm:p-8">
-          <form onSubmit={loginWithPassword} noValidate className="flex flex-col gap-5">
-            <div className="flex flex-col items-center gap-3 text-center">
-              <span className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-cta text-white">
-                <Lock className="h-7 w-7" aria-hidden />
-              </span>
-              <h1 className="text-2xl font-bold">অ্যাডমিন লগইন</h1>
-              <p className="text-text-muted">পাসওয়ার্ড দিয়ে সরাসরি লগইন করুন।</p>
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <label htmlFor={passwordId} className="text-[15px] font-semibold">
-                পাসওয়ার্ড
-              </label>
-              <Input
-                id={passwordId}
-                type="password"
-                placeholder="পাসওয়ার্ড"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                aria-invalid={Boolean(error)}
-                aria-describedby={error ? errId : undefined}
-                required
-              />
-              {error && (
-                <p id={errId} className="text-sm font-medium text-danger">
-                  {error}
-                </p>
-              )}
-            </div>
-            <Button type="submit" size="lg" disabled={busy} className="w-full">
-              {busy && <Loader2 className="animate-spin" aria-hidden />}
-              <LogIn className="h-4 w-4" aria-hidden />
-              লগইন
-            </Button>
-          </form>
+    <div className="card mx-auto w-full max-w-md p-6 sm:p-8">
+      <form onSubmit={submit} noValidate className="flex flex-col gap-5">
+        <div className="flex flex-col items-center gap-3 text-center">
+          <span className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-cta text-white">
+            {mode === "login" ? <Lock className="h-7 w-7" aria-hidden /> : <UserPlus className="h-7 w-7" aria-hidden />}
+          </span>
+          <h1 className="text-2xl font-bold">{mode === "login" ? "লগইন" : "অ্যাকাউন্ট তৈরি করুন"}</h1>
+          <p className="text-text-muted">
+            {mode === "login"
+              ? "ইমেইল ও পাসওয়ার্ড দিয়ে লগইন করুন।"
+              : "এনরোল ফর্মে যে ইমেইল দিয়েছিলেন সেটি দিন, আর একটি পাসওয়ার্ড ঠিক করুন।"}
+          </p>
         </div>
-      )}
 
-      {/* Student Phone Login */}
-      {step === "student" && (
-        <div className="card mx-auto w-full max-w-md p-6 sm:p-8">
-          <form onSubmit={loginStudent} noValidate className="flex flex-col gap-5">
-            <div className="flex flex-col items-center gap-3 text-center">
-              <span className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-cta text-white">
-                <Phone className="h-7 w-7" aria-hidden />
-              </span>
-              <h1 className="text-2xl font-bold">স্টুডেন্ট লগইন</h1>
-              <p className="text-text-muted">এনরোল করার সময় যে ফোন নম্বর দিয়েছিলেন, সেটি লিখুন।</p>
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <label htmlFor={phoneId} className="text-[15px] font-semibold">
-                ফোন নম্বর
-              </label>
-              <Input
-                id={phoneId}
-                type="tel"
-                inputMode="tel"
-                autoComplete="tel"
-                placeholder="01712345678"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                aria-invalid={Boolean(error)}
-                aria-describedby={error ? errId : undefined}
-                required
-              />
-              {error && (
-                <p id={errId} className="text-sm font-medium text-danger">
-                  {error}
-                </p>
-              )}
-            </div>
-            <Button type="submit" size="lg" disabled={busy} className="w-full">
-              {busy && <Loader2 className="animate-spin" aria-hidden />}
-              <LogIn className="h-4 w-4" aria-hidden />
-              লগইন
-            </Button>
-            <p className="text-center text-sm text-text-muted">
-              এখনো এনরোল করেননি?{" "}
-              <a href="/#enroll" className="font-semibold text-brand-strong underline underline-offset-4">
-                এনরোল করুন
-              </a>
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor={emailId} className="text-[15px] font-semibold">
+            ইমেইল
+          </label>
+          <Input
+            id={emailId}
+            type="email"
+            inputMode="email"
+            autoComplete="email"
+            placeholder="you@example.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            aria-invalid={Boolean(error)}
+            aria-describedby={error ? errId : undefined}
+            required
+          />
+        </div>
+
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor={passwordId} className="text-[15px] font-semibold">
+            পাসওয়ার্ড
+          </label>
+          <Input
+            id={passwordId}
+            type="password"
+            autoComplete={mode === "login" ? "current-password" : "new-password"}
+            placeholder="••••••"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            aria-invalid={Boolean(error)}
+            aria-describedby={error ? errId : undefined}
+            required
+          />
+          {error && (
+            <p id={errId} className="text-sm font-medium text-danger">
+              {error}
             </p>
-          </form>
+          )}
+          {notice && (
+            <p className="text-sm font-medium text-text-muted" role="status">
+              {notice}
+            </p>
+          )}
         </div>
-      )}
+
+        <Button type="submit" size="lg" disabled={busy} className="w-full">
+          {busy && <Loader2 className="animate-spin" aria-hidden />}
+          {mode === "login" ? (
+            <>
+              <LogIn aria-hidden /> লগইন
+            </>
+          ) : (
+            <>
+              <UserPlus aria-hidden /> অ্যাকাউন্ট তৈরি করুন
+            </>
+          )}
+        </Button>
+
+        {mode === "login" ? (
+          <p className="text-center text-sm text-text-muted">
+            প্রথমবার আসছেন?{" "}
+            <button
+              type="button"
+              onClick={() => switchTo("signup")}
+              className="font-semibold text-brand-strong underline underline-offset-4"
+            >
+              অ্যাকাউন্ট তৈরি করুন
+            </button>
+          </p>
+        ) : (
+          <p className="text-center text-sm text-text-muted">
+            আগে থেকেই অ্যাকাউন্ট আছে?{" "}
+            <button
+              type="button"
+              onClick={() => switchTo("login")}
+              className="font-semibold text-brand-strong underline underline-offset-4"
+            >
+              লগইন করুন
+            </button>
+          </p>
+        )}
+
+        <p className="text-center text-sm text-text-muted">
+          এখনো এনরোল করেননি?{" "}
+          <a href="/#enroll" className="font-semibold text-brand-strong underline underline-offset-4">
+            এনরোল করুন
+          </a>
+        </p>
+      </form>
     </div>
   );
 }

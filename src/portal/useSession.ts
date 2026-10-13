@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
 
-/** Current Supabase session; `loading` stays true until the stored session (or a magic-link token) is read. */
+/** Current Supabase session; `loading` stays true until the stored session is read. */
 export function useSession() {
   const [state, setState] = useState<{ loading: boolean; session: Session | null }>({
     loading: Boolean(supabase),

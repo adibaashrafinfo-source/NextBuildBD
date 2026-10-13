@@ -50,8 +50,10 @@ for f in (STUB, *MIGRATIONS):
         sys.exit(1)
     print(f"applied {f.split('/')[-1]}")
 
-# fixtures (as superuser)
+# fixtures (as superuser). Admin accounts are created before block_admin_signup is installed —
+# the order the README prescribes — so seeding them means stepping around the trigger.
 psql(f"""
+alter table auth.users disable trigger block_admin_signup;
 insert into auth.users values
  ('{ADMIN}', 'admin@example.com', now()),
  ('{STUDENT}', 'Student@Example.com', now()),
@@ -59,6 +61,7 @@ insert into auth.users values
  ('{UNCONF}', 'u@example.com', null),
  ('{OWNER}', 'AsrafulIslam2000@gmail.com', now()),
  ('{OWNER_UNCONF}', 'second-admin@example.com', null);
+alter table auth.users enable trigger block_admin_signup;
 insert into public.admin_emails values ('second-admin@example.com');
 insert into public.admins values ('{ADMIN}');
 insert into public.enrollments (full_name, phone, email, payment_method, sender_number, trx_id, amount, status) values
@@ -135,6 +138,14 @@ cases = [
     ("anon cannot read admin_emails", "anon", None, "select count(*) from public.admin_emails", "err:permission denied"),
     ("verified-now student gains access", "authenticated", PENDING, "select public.has_access()", "=t"),
     ("verified-now student sees classes", "authenticated", PENDING, "select count(*) from public.classes", "=1"),
+
+    # Password sign-up runs as the auth service, not as anon/authenticated.
+    ("sign-up with an admin address is blocked", "postgres", None,
+     "insert into auth.users values (gen_random_uuid(), 'AsrafulIslam2000@gmail.com', now())", "err:reserved"),
+    ("sign-up with a listed second admin address is blocked", "postgres", None,
+     "insert into auth.users values (gen_random_uuid(), 'second-admin@example.com', now())", "err:reserved"),
+    ("sign-up with an ordinary address works", "postgres", None,
+     "insert into auth.users values (gen_random_uuid(), 'newstudent@example.com', now())", "ok"),
 ]
 
 passed = 0
