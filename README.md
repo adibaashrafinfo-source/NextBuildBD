@@ -31,7 +31,7 @@ npm run preview   # serve the production build
 | Tool & brand logos (original colours) | `src/assets/logos/` via `src/components/shared/BrandLogo.tsx` |
 | Animated hero demo | `src/components/HeroShowcase.tsx` |
 | Smooth scrolling (Lenis) + progress bar | `src/components/shared/SmoothScroll.tsx` |
-| Database schema + security rules | `supabase/migrations/*.sql` (one-paste bundle: `supabase/setup_all.sql`) |
+| Database schema + security rules | `supabase/migrations/*.sql` (clean bundle: `supabase/setup_clean.sql`; or full bundle: `supabase/setup_all.sql`) |
 | Security-rule tests | `supabase/tests/rls_test.py` |
 | Supabase client + row types | `src/lib/supabase.ts` (loaded lazily; never in the landing page's first chunk) |
 | Portal (login, dashboard, admin) | `src/portal/` — its own chunk, loaded only on `/login`, `/dashboard`, `/admin` |
@@ -56,17 +56,39 @@ Email is optional. Supabase Auth signs in by email, so a student who gives none 
 
 The app is connected to the project `mlwbzmsitqtycminapwd` (URL + publishable key in `src/config.ts` → `supabase`; `VITE_SUPABASE_URL` / `VITE_SUPABASE_PUBLISHABLE_KEY` override them).
 
-1. **Create the database (once):** SQL Editor → New query → paste all of `supabase/setup_all.sql` → Run. (It is every file in `supabase/migrations/` in order; regenerate with `npm run db:bundle`. With the CLI: `supabase db push`.)
-2. *(already done: project created)*
-3. **Auth → Providers → Email:** enabled, and ***Confirm email* turned OFF**. Sign-up then returns a session straight away, which is what makes password login work without any mail. (No SMTP, no email templates and no URL configuration are needed — nothing is ever emailed.)
-4. **Create the admin account:** open `supabase/create_admin.sql`, set `admin_password` to a real password, and run the whole file in the SQL Editor. Admins have no enrollment, so this is the only way an admin account comes into being. Running it again just resets the password.
-5. **Keys:** already in `src/config.ts`. To point a build at another project, set `VITE_SUPABASE_URL` / `VITE_SUPABASE_PUBLISHABLE_KEY` (in `.env` or the host's environment variables) and rebuild. Never use the secret/service_role key in this app.
-6. **More admins / a forgotten admin password:** edit the two values at the top of `supabase/create_admin.sql` and run it again. It adds the address to `public.admin_emails`, creates the account if it is new, and resets the password if it is not.
-7. Open `/admin` → **সেটিংস** (WhatsApp group link, default Meet link) and **ক্লাস** (add classes; paste the recording link after each class).
+1. **Create the database (once):**
+   - Supabase dashboard → SQL Editor → New query
+   - Copy and paste the entire contents of **`supabase/setup_clean.sql`**
+   - Click Run
+   - (If you prefer individual migrations, use `supabase/setup_all.sql` or run `supabase/migrations/*.sql` in order)
+
+2. **Turn off email confirmation:**
+   - Supabase dashboard → Authentication → Providers → Email
+   - Uncheck **"Confirm email"** (turn it OFF)
+   - This allows instant sign-in without email verification
+
+3. **Create the admin account:**
+   - Edit `supabase/create_admin.sql`: set `admin_email` and `admin_password` to your values
+   - SQL Editor → New query → paste the entire file → Run
+   - You can now sign in to `/admin` with that email and password
+4. **Set up the app:**
+   - Keys are already in `src/config.ts` (Supabase project `mlwbzmsitqtycminapwd`)
+   - To use a different project: set `VITE_SUPABASE_URL` / `VITE_SUPABASE_PUBLISHABLE_KEY` in `.env` and rebuild
+   - Never use the secret/service_role key in this app
+
+5. **Configure classes and settings:**
+   - Sign in to `/admin` with your admin email and password
+   - **সেটিংস:** set WhatsApp group link and default Meet link
+   - **ক্লাস:** add classes and paste recording links after each one
+
+6. **Add more admins or reset a password:**
+   - Edit `supabase/create_admin.sql` with the new email and password
+   - Run it again in SQL Editor
+   - It creates a new admin account or resets the password if it already exists
 
 Hosting: `vercel.json` rewrites `/login`, `/dashboard`, `/admin` to `index.html`. On other hosts add the same SPA fallback.
 
-Until step 1 is done, form submissions fail (the form shows an error with a WhatsApp fallback) and the portal can't load data.
+⚠️ **Until the database is set up (step 1)**, form submissions fail and the portal can't load data.
 
 ### Testing the security rules
 
