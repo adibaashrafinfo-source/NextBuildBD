@@ -2,11 +2,13 @@ import { useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { ShieldAlert } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { OverviewPanel } from "./admin/OverviewPanel";
 import { PaymentsPanel } from "./admin/PaymentsPanel";
 import { ClassesPanel } from "./admin/ClassesPanel";
 import { SettingsPanel } from "./admin/SettingsPanel";
 
 const TABS = [
+  { id: "overview", label: "ওভারভিউ" },
   { id: "payments", label: "পেমেন্ট যাচাই" },
   { id: "classes", label: "ক্লাস" },
   { id: "settings", label: "সেটিংস" },
@@ -14,7 +16,7 @@ const TABS = [
 type TabId = (typeof TABS)[number]["id"];
 
 export function AdminPage({ isAdmin, session }: { isAdmin: boolean; session: Session }) {
-  const [tab, setTab] = useState<TabId>("payments");
+  const [tab, setTab] = useState<TabId>("overview");
 
   if (!isAdmin) {
     return (
@@ -31,7 +33,7 @@ export function AdminPage({ isAdmin, session }: { isAdmin: boolean; session: Ses
   return (
     <div className="flex flex-col gap-6">
       <h1 className="text-[26px] font-bold sm:text-3xl">অ্যাডমিন প্যানেল</h1>
-      <div role="tablist" aria-label="অ্যাডমিন বিভাগ" className="flex gap-1 overflow-x-auto rounded-2xl border border-border bg-bg-elevated p-1">
+      <div role="tablist" aria-label="অ্যাডমিন বিভাগ" className="grid grid-cols-2 gap-1 rounded-2xl border border-border bg-bg-elevated p-1 sm:flex">
         {TABS.map((t) => (
           <button
             key={t.id}
@@ -51,7 +53,15 @@ export function AdminPage({ isAdmin, session }: { isAdmin: boolean; session: Ses
         ))}
       </div>
       <div role="tabpanel" id={`panel-${tab}`} aria-labelledby={`tab-${tab}`}>
-        {tab === "payments" ? <PaymentsPanel /> : tab === "classes" ? <ClassesPanel /> : <SettingsPanel />}
+        {tab === "overview" ? (
+          <OverviewPanel onReviewPayments={() => setTab("payments")} />
+        ) : tab === "payments" ? (
+          <PaymentsPanel />
+        ) : tab === "classes" ? (
+          <ClassesPanel />
+        ) : (
+          <SettingsPanel />
+        )}
       </div>
     </div>
   );

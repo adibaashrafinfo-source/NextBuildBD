@@ -4,7 +4,7 @@ Single-page, conversion-focused landing page for the NextBuildBD Vibe Coding cou
 
 **Stack:** React 18 + TypeScript + Vite, Tailwind CSS (CSS-variable tokens), shadcn/ui (Button, Accordion, Dialog), framer-motion, lucide-react, Supabase (auth + Postgres). Fonts: Hind Siliguri + Plus Jakarta Sans.
 
-Routes: `/` landing page · `/login` student login (email magic link / code) · `/dashboard` student dashboard · `/admin` payment verification + class management.
+Routes: `/` landing page · `/login` student login (email magic link / code) · `/dashboard` student dashboard · `/admin` admin dashboard: overview (pending payments, submissions / revenue for 7·30·90 days, payment-method split, upcoming classes, verified-student CSV), payment verification, class management, settings.
 
 ## Run
 
