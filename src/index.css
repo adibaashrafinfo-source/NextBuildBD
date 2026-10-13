@@ -1,0 +1,157 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ---------- Design tokens (spec §1.1) ---------- */
+:root {
+  /* LIGHT MODE */
+  --bg: #F7F8FF;
+  --bg-elevated: #FFFFFF;
+  --bg-soft: #EEF0FF;
+  --text: #0B0D2E;
+  --text-muted: #4B5078;
+  --border: #DDE0F5;
+
+  --brand: #4338F0;          /* logo "BD" indigo */
+  --brand-strong: #2E24C9;
+  --brand-soft: #E4E6FF;
+  --accent: #8B6CFF;         /* violet */
+  --sky: #5B8CFF;            /* blue highlight */
+  --lavender: #C9B8FF;
+
+  --gradient-brand: linear-gradient(135deg, #5B8CFF 0%, #4338F0 55%, #8B6CFF 100%);
+  --gradient-hero-glow: radial-gradient(60% 50% at 50% 0%, rgba(67,56,240,.16), transparent 70%);
+
+  --success: #12A150;
+  --warning: #F5A524;
+  --shadow-card: 0 10px 30px -12px rgba(67,56,240,.25);
+
+  /* Additions (not in spec) needed for WCAG AA:
+     --gradient-cta: darker stops so white button text stays >= 4.5:1
+     --gradient-text: gradient headline text >= 3:1 on --bg
+     --input-border: form field edges >= 3:1 (WCAG 1.4.11) */
+  --gradient-cta: linear-gradient(135deg, #3F5BEA 0%, #4338F0 55%, #6A48E6 100%);
+  --gradient-text: var(--gradient-cta);
+  --input-border: #7E84AE;
+  --danger: #C42B2B;
+  --pattern-dot: rgba(67,56,240,.12);
+
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+  /* DARK MODE (logo background feel) */
+  --bg: #050816;
+  --bg-elevated: #0C1030;
+  --bg-soft: #11164A;
+  --text: #F4F5FF;
+  --text-muted: #A9AEDB;
+  --border: #1F2566;
+
+  --brand: #5B6BFF;
+  --brand-strong: #7C8BFF;
+  --brand-soft: #1A2070;
+  --accent: #A98CFF;
+  --sky: #7FA6FF;
+  --lavender: #C9B8FF;
+
+  --gradient-brand: linear-gradient(135deg, #7FA6FF 0%, #4F46FF 55%, #A98CFF 100%);
+  --gradient-hero-glow: radial-gradient(60% 50% at 50% 0%, rgba(91,107,255,.35), transparent 70%);
+
+  --shadow-card: 0 14px 40px -16px rgba(91,107,255,.45);
+
+  --gradient-text: var(--gradient-brand);
+  --input-border: #6670C8;
+  --danger: #FF8A8A;
+  --pattern-dot: rgba(127,166,255,.10);
+
+  color-scheme: dark;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    scroll-padding-top: 80px;
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    @apply bg-bg font-sans text-text antialiased;
+    font-size: 17px;
+    line-height: 1.7;
+    overflow-x: hidden;
+  }
+  h1, h2, h3 {
+    line-height: 1.35;
+  }
+  ::selection {
+    background: var(--brand);
+    color: #fff;
+  }
+  :focus-visible {
+    outline: 3px solid var(--brand-strong);
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
+}
+
+@layer components {
+  .section {
+    @apply py-16 md:py-24;
+  }
+  .card {
+    @apply rounded-2xl border border-border bg-bg-elevated shadow-card;
+  }
+  .text-gradient {
+    background-image: var(--gradient-text);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .hero-pattern {
+    background-image: radial-gradient(var(--pattern-dot) 1px, transparent 1px);
+    background-size: 22px 22px;
+    mask-image: radial-gradient(ellipse 70% 60% at 50% 30%, #000 30%, transparent 75%);
+  }
+  /* Translucent surfaces. Solid token colour first; color-mix only where supported
+     (older Android browsers would otherwise lose the background entirely). */
+  .glass {
+    background-color: var(--bg);
+  }
+  .glass-elevated {
+    background-color: var(--bg-elevated);
+  }
+  .bg-success-soft {
+    background-color: var(--brand-soft);
+  }
+  @supports (background-color: color-mix(in srgb, red 50%, transparent)) {
+    .glass {
+      background-color: color-mix(in srgb, var(--bg) 78%, transparent);
+      -webkit-backdrop-filter: blur(16px);
+      backdrop-filter: blur(16px);
+    }
+    .glass-elevated {
+      background-color: color-mix(in srgb, var(--bg-elevated) 92%, transparent);
+      -webkit-backdrop-filter: blur(16px);
+      backdrop-filter: blur(16px);
+    }
+    .bg-success-soft {
+      background-color: color-mix(in srgb, var(--success) 15%, transparent);
+    }
+  }
+  .num {
+    font-family: "Plus Jakarta Sans", "Hind Siliguri", system-ui, sans-serif;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

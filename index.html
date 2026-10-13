@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="bn">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NextBuildBD — Claude Code, Lovable ও Supabase দিয়ে Website ও SaaS বানানো শিখুন</title>
+    <meta name="description" content="Google Meet-এ Live Class। Claude Code, Lovable ও Supabase দিয়ে Landing Page, Website ও SaaS বানানো শিখুন মাত্র %PRICE_BN% টাকায়।" />
+    <meta name="theme-color" content="#050816" />
+    <link rel="canonical" href="%SITE_URL%/" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="bn_BD" />
+    <meta property="og:site_name" content="NextBuildBD" />
+    <meta property="og:title" content="NextBuildBD — Learn. Build. Launch." />
+    <meta property="og:description" content="Google Meet-এ Live Class। Claude Code, Lovable ও Supabase দিয়ে Landing Page, Website ও SaaS বানানো শিখুন মাত্র %PRICE_BN% টাকায়।" />
+    <meta property="og:url" content="%SITE_URL%/" />
+    <meta property="og:image" content="%SITE_URL%/logo.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="NextBuildBD — Learn. Build. Launch." />
+    <meta name="twitter:image" content="%SITE_URL%/og-image.png" />
+
+    <link rel="icon" href="/favicon.ico" sizes="any" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <link rel="preload" as="image" href="/logo-mark.webp" type="image/webp" />
+
+    <!-- Theme before first paint: stored choice, else system preference (no flash). -->
+    <script>
+      (function () {
+        var t = null;
+        try {
+          t = localStorage.getItem("nbbd-theme");
+        } catch (e) {}
+        if (t !== "light" && t !== "dark") {
+          t = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+        }
+        document.documentElement.setAttribute("data-theme", t);
+        var m = document.querySelector('meta[name="theme-color"]');
+        if (m) m.setAttribute("content", t === "dark" ? "#050816" : "#F7F8FF");
+      })();
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!-- Non-render-blocking font load (display=swap); system fonts show until it arrives. -->
+    <link
+      rel="preload"
+      as="style"
+      href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap"
+    />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap"
+      media="print"
+      onload="this.media='all'"
+    />
+    <noscript>
+      <link
+        rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap"
+      />
+    </noscript>
+
+    <script type="application/ld+json">%COURSE_JSON_LD%</script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <noscript>
+      <p style="padding:16px;font-family:sans-serif">এই পেজটি দেখতে JavaScript চালু করুন।</p>
+    </noscript>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

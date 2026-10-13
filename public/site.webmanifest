@@ -1,0 +1,9 @@
+{
+  "name": "NextBuildBD",
+  "short_name": "NextBuildBD",
+  "icons": [{ "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" }],
+  "theme_color": "#050816",
+  "background_color": "#050816",
+  "display": "standalone",
+  "start_url": "/"
+}
