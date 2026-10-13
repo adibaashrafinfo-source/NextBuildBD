@@ -104,7 +104,11 @@ export function OverviewPanel({ onReviewPayments }: { onReviewPayments: () => vo
     const header = ["নাম", "ইমেইল", "ফোন", "মাধ্যম", "TrxID", "পরিমাণ", "জমার সময়"];
     const lines = rows
       .filter((r) => r.status === "verified")
-      .map((r) => [r.full_name, r.email, r.phone, PAYMENT_LABELS[r.payment_method], r.trx_id, r.amount, r.submitted_at].map(cell).join(","));
+      .map((r) =>
+        [r.full_name, r.email ?? "", r.phone, PAYMENT_LABELS[r.payment_method], r.trx_id, r.amount, r.submitted_at]
+          .map(cell)
+          .join(","),
+      );
     // BOM so Excel opens the Bangla text as UTF-8.
     const blob = new Blob(["﻿" + [header.map(cell).join(","), ...lines].join("\r\n")], { type: "text/csv;charset=utf-8" });
     const a = document.createElement("a");

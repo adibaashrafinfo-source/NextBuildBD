@@ -56,9 +56,13 @@ export function PaymentsPanel() {
     return c;
   }, [rows]);
 
+  // Only a shared email flags a repeat applicant; a missing one says nothing.
   const emailCounts = useMemo(() => {
     const m = new Map<string, number>();
-    rows?.forEach((r) => m.set(r.email.toLowerCase(), (m.get(r.email.toLowerCase()) ?? 0) + 1));
+    rows?.forEach((r) => {
+      const key = r.email?.toLowerCase();
+      if (key) m.set(key, (m.get(key) ?? 0) + 1);
+    });
     return m;
   }, [rows]);
 
@@ -67,7 +71,7 @@ export function PaymentsPanel() {
     return (rows ?? []).filter(
       (r) =>
         (filter === "all" || r.status === filter) &&
-        (!q || [r.trx_id, r.phone, r.sender_number, r.email, r.full_name].some((v) => v.toLowerCase().includes(q))),
+        (!q || [r.trx_id, r.phone, r.sender_number, r.email, r.full_name].some((v) => v?.toLowerCase().includes(q))),
     );
   }, [rows, filter, query]);
 
@@ -136,7 +140,7 @@ export function PaymentsPanel() {
       ) : (
         <ul className="flex flex-col gap-3">
           {visible.map((r) => (
-            <EnrollmentRow key={r.id} row={r} sameEmail={(emailCounts.get(r.email.toLowerCase()) ?? 1) > 1} onUpdate={update} />
+            <EnrollmentRow key={r.id} row={r} sameEmail={(emailCounts.get(r.email?.toLowerCase() ?? "") ?? 1) > 1} onUpdate={update} />
           ))}
         </ul>
       )}
@@ -180,7 +184,12 @@ function EnrollmentRow({
         <div className="min-w-0">
           <p className="text-lg font-bold">{r.full_name}</p>
           <p className="num text-[15px] text-text-muted">
-            <span className="break-all">{r.email}</span> · <span className="whitespace-nowrap">{formatPhone(r.phone)}</span>
+            {r.email && (
+              <>
+                <span className="break-all">{r.email}</span> ·{" "}
+              </>
+            )}
+            <span className="whitespace-nowrap">{formatPhone(r.phone)}</span>
           </p>
         </div>
         <span className={cn("rounded-full px-3 py-1 text-sm font-semibold", STATUS_STYLE[r.status])}>{STATUS_LABEL[r.status]}</span>

@@ -24,7 +24,7 @@ export type Enrollment = {
   id: string;
   full_name: string;
   phone: string;
-  email: string;
+  email: string | null;
   payment_method: PaymentMethod;
   sender_number: string;
   trx_id: string;
@@ -33,12 +33,20 @@ export type Enrollment = {
   admin_note: string | null;
   submitted_at: string;
   reviewed_at: string | null;
+  user_id: string | null;
 };
 
 export type EnrollmentInsert = Pick<
   Enrollment,
-  "full_name" | "phone" | "email" | "payment_method" | "sender_number" | "trx_id" | "amount"
+  "full_name" | "phone" | "email" | "payment_method" | "sender_number" | "trx_id" | "amount" | "user_id"
 >;
+
+/**
+ * Supabase Auth is addressed by email, so a student who gives none signs in under an address
+ * derived from the mobile number they always give. Nothing is ever sent to it.
+ */
+export const PHONE_LOGIN_DOMAIN = "phone.nextbuildbd.local";
+export const authEmailForPhone = (phone: string) => `${phone}@${PHONE_LOGIN_DOMAIN}`;
 
 export type CourseClass = {
   id: string;

@@ -18,6 +18,7 @@ import type { EnrollmentInsert } from "@/lib/supabase";
 type FormValues = {
   fullName: string;
   phone: string;
+  password: string;
   email: string;
   method: PaymentMethod | "";
   senderNumber: string;
@@ -25,8 +26,11 @@ type FormValues = {
 };
 type Errors = Partial<Record<keyof FormValues, string>>;
 
-const EMPTY: FormValues = { fullName: "", phone: "", email: "", method: "", senderNumber: "", trxId: "" };
-const FIELD_ORDER: (keyof FormValues)[] = ["fullName", "phone", "email", "method", "senderNumber", "trxId"];
+/** Supabase rejects anything shorter. */
+export const MIN_PASSWORD = 6;
+
+const EMPTY: FormValues = { fullName: "", phone: "", password: "", email: "", method: "", senderNumber: "", trxId: "" };
+const FIELD_ORDER: (keyof FormValues)[] = ["fullName", "phone", "password", "email", "method", "senderNumber", "trxId"];
 
 function validate(v: FormValues): Errors {
   const e: Errors = {};
@@ -36,8 +40,10 @@ function validate(v: FormValues): Errors {
   if (!phone) e.phone = "মোবাইল নম্বর দিন।";
   else if (!BD_PHONE.test(phone)) e.phone = "সঠিক বাংলাদেশি নম্বর দিন (যেমন 01XXXXXXXXX, ১১ ডিজিট)।";
 
-  if (!v.email.trim()) e.email = "ইমেইল দিন।";
-  else if (!EMAIL.test(v.email.trim())) e.email = "সঠিক ইমেইল ঠিকানা দিন।";
+  if (v.password.length < MIN_PASSWORD) e.password = `পাসওয়ার্ড কমপক্ষে ${toBanglaNumber(MIN_PASSWORD)} অক্ষরের দিন।`;
+
+  // Email is optional; the mobile number is what the student logs in with.
+  if (v.email.trim() && !EMAIL.test(v.email.trim())) e.email = "সঠিক ইমেইল ঠিকানা দিন।";
 
   if (!v.method) e.method = "পেমেন্ট মাধ্যম বেছে নিন।";
 
@@ -213,8 +219,8 @@ function EnrollForm() {
   const [errors, setErrors] = useState<Errors>({});
   const [touched, setTouched] = useState<Partial<Record<keyof FormValues, boolean>>>({});
   const [status, setStatus] = useState<"idle" | "submitting" | "success">("idle");
-  const [submitError, setSubmitError] = useState<"duplicate" | "failed" | null>(null);
-  const [submittedEmail, setSubmittedEmail] = useState("");
+  const [submitError, setSubmitError] = useState<"duplicate" | "account" | "failed" | null>(null);
+  const [submittedId, setSubmittedId] = useState("");
   const formRef = useRef<HTMLFormElement>(null);
 
   const set = <K extends keyof FormValues>(key: K, value: FormValues[K]) => {
@@ -240,25 +246,44 @@ function EnrollForm() {
 
     setStatus("submitting");
     setSubmitError(null);
+    const phone = normalizePhone(values.phone);
     // status (pending), submitted_at and review fields are set by the database.
     const payload: EnrollmentInsert = {
       full_name: values.fullName.trim(),
-      phone: normalizePhone(values.phone),
-      email: values.email.trim().toLowerCase(),
+      phone,
+      email: values.email.trim().toLowerCase() || null,
       payment_method: values.method as PaymentMethod,
       sender_number: normalizePhone(values.senderNumber),
       trx_id: values.trxId.trim().toUpperCase(),
       amount: CONFIG.price,
+      user_id: null,
     };
 
     try {
       // Loaded on demand so supabase-js never weighs on the landing page's first load.
-      const { supabase, UNIQUE_VIOLATION } = await import("@/lib/supabase");
+      const { supabase, UNIQUE_VIOLATION, authEmailForPhone } = await import("@/lib/supabase");
       if (!supabase) {
         if (!import.meta.env.DEV) throw new Error("Supabase is not configured");
         console.log("[NextBuildBD] Supabase not configured — enrollment NOT saved:", payload);
       } else {
-        // Insert only: anonymous visitors may not read enrollments back (RLS), so no .select().
+        // The account the student will log in with. Supabase signs in by email, so one is derived
+        // from the mobile number when no email was given.
+        const authEmail = payload.email ?? authEmailForPhone(phone);
+        const signedUp = await supabase.auth.signUp({ email: authEmail, password: values.password });
+        if (signedUp.error) {
+          // Already enrolled once: carry on under that account if this is the same password.
+          const existing = await supabase.auth.signInWithPassword({ email: authEmail, password: values.password });
+          if (existing.error) {
+            setSubmitError("account");
+            setStatus("idle");
+            return;
+          }
+          payload.user_id = existing.data.user.id;
+        } else {
+          payload.user_id = signedUp.data.user?.id ?? null;
+        }
+
+        // Insert only: students may not read other rows back (RLS), so no .select().
         const { error } = await supabase.from("enrollments").insert(payload);
         if (error) {
           setSubmitError(error.code === UNIQUE_VIOLATION ? "duplicate" : "failed");
@@ -272,7 +297,7 @@ function EnrollForm() {
       return;
     }
 
-    setSubmittedEmail(payload.email);
+    setSubmittedId(phone);
     setStatus("success");
   };
 
@@ -308,12 +333,12 @@ function EnrollForm() {
               আপনার তথ্য জমা হয়েছে। যাচাই শেষে ড্যাশবোর্ড চালু হবে।
             </p>
             <p className="max-w-sm text-text-muted">
-              এই ইমেইল দিয়ে লগইন করে পেমেন্টের স্ট্যাটাস দেখুন:{" "}
-              <span className="num break-all font-semibold text-text">{submittedEmail}</span>
+              এই মোবাইল নম্বর ও আপনার পাসওয়ার্ড দিয়ে লগইন করে পেমেন্টের স্ট্যাটাস দেখুন:{" "}
+              <span className="num whitespace-nowrap font-semibold text-text">{formatPhone(submittedId)}</span>
             </p>
             <div className="flex flex-col gap-3 sm:flex-row">
               <Button asChild>
-                <a href={`/login?email=${encodeURIComponent(submittedEmail)}`}>
+                <a href={`/login?id=${encodeURIComponent(submittedId)}`}>
                   <LayoutDashboard aria-hidden /> ড্যাশবোর্ডে লগইন করুন
                 </a>
               </Button>
@@ -368,7 +393,26 @@ function EnrollForm() {
               )}
             </Field>
 
-            <Field label="ইমেইল" error={showErr("email")}>
+            <Field
+              label="পাসওয়ার্ড"
+              hint="এই নম্বর ও পাসওয়ার্ড দিয়েই পরে লগইন করবেন"
+              error={showErr("password")}
+            >
+              {(p) => (
+                <input
+                  {...p}
+                  name="password"
+                  type="password"
+                  autoComplete="new-password"
+                  placeholder="••••••"
+                  value={values.password}
+                  onChange={(e) => set("password", e.target.value)}
+                  onBlur={() => blur("password")}
+                />
+              )}
+            </Field>
+
+            <Field label="ইমেইল (ঐচ্ছিক)" error={showErr("email")}>
               {(p) => (
                 <input
                   {...p}
@@ -431,7 +475,9 @@ function EnrollForm() {
                 <p>
                   {submitError === "duplicate"
                     ? "এই TrxID দিয়ে আগেই জমা দেওয়া হয়েছে। স্ট্যাটাস দেখতে "
-                    : "জমা দেওয়া যায়নি। ইন্টারনেট সংযোগ দেখে আবার চেষ্টা করুন, অথবা "}
+                    : submitError === "account"
+                      ? "এই নম্বরে আগে থেকেই অ্যাকাউন্ট আছে। আগের পাসওয়ার্ডটি দিন, অথবা "
+                      : "জমা দেওয়া যায়নি। ইন্টারনেট সংযোগ দেখে আবার চেষ্টা করুন, অথবা "}
                   {submitError === "duplicate" ? (
                     <a href="/login" className="font-semibold text-brand-strong underline underline-offset-4">
                       লগইন করুন

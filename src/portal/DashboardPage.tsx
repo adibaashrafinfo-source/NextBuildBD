@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { BrandLogo } from "@/components/shared/BrandLogo";
 import { WhatsAppIcon } from "@/components/shared/BrandIcons";
 import { CONFIG, PAYMENT_LABELS } from "@/config";
-import { supabase, type CourseClass, type CourseSettings, type Enrollment } from "@/lib/supabase";
+import { supabase, PHONE_LOGIN_DOMAIN, type CourseClass, type CourseSettings, type Enrollment } from "@/lib/supabase";
 import { cn, formatDateTime, toBanglaNumber, waLink } from "@/lib/utils";
 
 type Data = { enrollments: Enrollment[]; classes: CourseClass[]; settings: CourseSettings | null };
@@ -72,7 +72,8 @@ export function DashboardPage({ session }: { session: Session }) {
     );
   }
 
-  const email = session.user.email ?? "";
+  // Students who gave no email sign in under an address derived from their phone; never show it.
+  const realEmail = session.user.email?.endsWith(`@${PHONE_LOGIN_DOMAIN}`) ? null : (session.user.email ?? null);
   const verified = data.enrollments.find((e) => e.status === "verified");
   const latest = data.enrollments[0];
   const refreshBtn = (
@@ -86,8 +87,9 @@ export function DashboardPage({ session }: { session: Session }) {
       return (
         <StateCard icon={<Clock className="h-8 w-8" aria-hidden />} title="কোনো এনরোলমেন্ট পাওয়া যায়নি">
           <p>
-            <span className="num break-all font-semibold text-text">{email}</span> ইমেইলে কোনো পেমেন্ট জমা নেই। এনরোল
-            ফর্মে যে ইমেইল দিয়েছিলেন, সেটি দিয়ে লগইন করুন — অথবা এখনই এনরোল করুন।
+            {realEmail && <span className="num break-all font-semibold text-text">{realEmail} — </span>}
+            এই অ্যাকাউন্টে কোনো পেমেন্ট জমা নেই। এনরোল ফর্মে যে মোবাইল নম্বর দিয়েছিলেন, সেটি দিয়ে লগইন করুন — অথবা
+            এখনই এনরোল করুন।
           </p>
           <div className="mt-5 flex flex-col justify-center gap-3 sm:flex-row">
             <Button asChild>

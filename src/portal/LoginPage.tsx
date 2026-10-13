@@ -1,83 +1,69 @@
 import { useId, useState, type FormEvent } from "react";
-import { Loader2, Lock, LogIn, UserPlus } from "lucide-react";
+import { Loader2, LogIn, UserRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/lib/supabase";
-import { EMAIL } from "@/lib/validation";
+import { BD_PHONE, normalizePhone } from "@/lib/validation";
+import { CONFIG } from "@/config";
+import { waLink } from "@/lib/utils";
 
 /**
- * Email + password sign-in for students and admins alike — no magic link, no emailed code.
- * Who sees what is decided by the database: `is_admin()` opens /admin, and a student's dashboard
- * only unlocks once an admin marks their enrollment verified (see supabase/migrations).
+ * Sign in with a mobile number or an email, plus the password chosen while enrolling.
  *
- * Needs Auth → Providers → Email → "Confirm email" turned OFF, otherwise a new account has no
- * session until its address is confirmed.
+ * Supabase Auth signs in by email, and a student may have given none, so public.login_email()
+ * turns whichever identifier was typed into the address to sign in with. It answers only when the
+ * password is right, so it reveals nothing about who has enrolled.
+ *
+ * Admins are created by hand (see README) and sign in here with their email.
  */
-
-const MIN_PASSWORD = 6;
-
-function messageFor(error: { message: string; status?: number }, mode: Mode) {
-  const m = error.message.toLowerCase();
-  if (m.includes("invalid login credentials")) return "ইমেইল বা পাসওয়ার্ড ভুল।";
-  if (m.includes("already registered") || m.includes("already exists"))
-    return "এই ইমেইলে অ্যাকাউন্ট আগে থেকেই আছে। লগইন করুন।";
-  if (m.includes("password")) return `পাসওয়ার্ড কমপক্ষে ${MIN_PASSWORD} অক্ষরের দিন।`;
-  if (m.includes("email not confirmed")) return "অ্যাকাউন্টটি এখনো চালু হয়নি। অ্যাডমিনের সাথে যোগাযোগ করুন।";
-  if (error.status === 429) return "অনেকবার চেষ্টা হয়েছে। এক মিনিট পরে আবার চেষ্টা করুন।";
-  return mode === "login" ? "লগইন করা যায়নি। আবার চেষ্টা করুন।" : "অ্যাকাউন্ট তৈরি করা যায়নি। আবার চেষ্টা করুন।";
-}
-
-type Mode = "login" | "signup";
-
 export function LoginPage() {
-  const [mode, setMode] = useState<Mode>("login");
-  const [email, setEmail] = useState(() => new URLSearchParams(window.location.search).get("email") ?? "");
+  const [identifier, setIdentifier] = useState(
+    () => new URLSearchParams(window.location.search).get("id") ?? "",
+  );
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [notice, setNotice] = useState<string | null>(null);
-  const emailId = useId();
+  const idFieldId = useId();
   const passwordId = useId();
   const errId = useId();
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
-    const value = email.trim().toLowerCase();
-    if (!EMAIL.test(value)) {
-      setError("সঠিক ইমেইল ঠিকানা দিন।");
+    const typed = identifier.trim();
+    if (!typed || !password) {
+      setError("মোবাইল নম্বর বা ইমেইল এবং পাসওয়ার্ড দিন।");
       return;
     }
-    if (password.length < MIN_PASSWORD) {
-      setError(`পাসওয়ার্ড কমপক্ষে ${MIN_PASSWORD} অক্ষরের দিন।`);
-      return;
-    }
+    // A mobile number may arrive with +88, spaces or Bangla digits; the database stores 01XXXXXXXXX.
+    const asPhone = normalizePhone(typed);
+    const lookup = BD_PHONE.test(asPhone) ? asPhone : typed.toLowerCase();
+
     setBusy(true);
     setError(null);
-    setNotice(null);
+    const { data: loginEmail, error: failed } = await supabase!.rpc("login_email", {
+      identifier: lookup,
+      password,
+    });
 
-    const auth = supabase!.auth;
-    const { data, error: failed } =
-      mode === "login"
-        ? await auth.signInWithPassword({ email: value, password })
-        : await auth.signUp({ email: value, password });
+    if (failed || !loginEmail) {
+      setBusy(false);
+      setError(
+        failed
+          ? "লগইন করা যায়নি। কিছুক্ষণ পরে আবার চেষ্টা করুন।"
+          : "মোবাইল নম্বর/ইমেইল বা পাসওয়ার্ড ভুল।",
+      );
+      return;
+    }
 
+    const { error: signInFailed } = await supabase!.auth.signInWithPassword({
+      email: loginEmail as string,
+      password,
+    });
     setBusy(false);
-    if (failed) {
-      setError(messageFor(failed, mode));
-      return;
+    if (signInFailed) {
+      setError("লগইন করা যায়নি। কিছুক্ষণ পরে আবার চেষ্টা করুন।");
     }
-    // Sign-up only returns a session while "Confirm email" is off; say so rather than hanging.
-    if (!data.session) {
-      setNotice("অ্যাকাউন্ট তৈরি হয়েছে, কিন্তু এখনো চালু হয়নি। অ্যাডমিনের সাথে যোগাযোগ করুন।");
-      return;
-    }
-    // On success onAuthStateChange fires and PortalApp redirects to `next`.
-  };
-
-  const switchTo = (to: Mode) => {
-    setMode(to);
-    setError(null);
-    setNotice(null);
+    // On success onAuthStateChange fires and PortalApp redirects.
   };
 
   return (
@@ -85,28 +71,23 @@ export function LoginPage() {
       <form onSubmit={submit} noValidate className="flex flex-col gap-5">
         <div className="flex flex-col items-center gap-3 text-center">
           <span className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-cta text-white">
-            {mode === "login" ? <Lock className="h-7 w-7" aria-hidden /> : <UserPlus className="h-7 w-7" aria-hidden />}
+            <UserRound className="h-7 w-7" aria-hidden />
           </span>
-          <h1 className="text-2xl font-bold">{mode === "login" ? "লগইন" : "অ্যাকাউন্ট তৈরি করুন"}</h1>
-          <p className="text-text-muted">
-            {mode === "login"
-              ? "ইমেইল ও পাসওয়ার্ড দিয়ে লগইন করুন।"
-              : "এনরোল ফর্মে যে ইমেইল দিয়েছিলেন সেটি দিন, আর একটি পাসওয়ার্ড ঠিক করুন।"}
-          </p>
+          <h1 className="text-2xl font-bold">লগইন</h1>
+          <p className="text-text-muted">এনরোল করার সময় যে মোবাইল নম্বর ও পাসওয়ার্ড দিয়েছিলেন, সেটি দিন।</p>
         </div>
 
         <div className="flex flex-col gap-1.5">
-          <label htmlFor={emailId} className="text-[15px] font-semibold">
-            ইমেইল
+          <label htmlFor={idFieldId} className="text-[15px] font-semibold">
+            মোবাইল নম্বর অথবা ইমেইল
           </label>
           <Input
-            id={emailId}
-            type="email"
-            inputMode="email"
-            autoComplete="email"
-            placeholder="you@example.com"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            id={idFieldId}
+            type="text"
+            autoComplete="username"
+            placeholder="01XXXXXXXXX"
+            value={identifier}
+            onChange={(e) => setIdentifier(e.target.value)}
             aria-invalid={Boolean(error)}
             aria-describedby={error ? errId : undefined}
             required
@@ -120,7 +101,7 @@ export function LoginPage() {
           <Input
             id={passwordId}
             type="password"
-            autoComplete={mode === "login" ? "current-password" : "new-password"}
+            autoComplete="current-password"
             placeholder="••••••"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
@@ -133,54 +114,28 @@ export function LoginPage() {
               {error}
             </p>
           )}
-          {notice && (
-            <p className="text-sm font-medium text-text-muted" role="status">
-              {notice}
-            </p>
-          )}
         </div>
 
         <Button type="submit" size="lg" disabled={busy} className="w-full">
           {busy && <Loader2 className="animate-spin" aria-hidden />}
-          {mode === "login" ? (
-            <>
-              <LogIn aria-hidden /> লগইন
-            </>
-          ) : (
-            <>
-              <UserPlus aria-hidden /> অ্যাকাউন্ট তৈরি করুন
-            </>
-          )}
+          <LogIn aria-hidden /> লগইন
         </Button>
-
-        {mode === "login" ? (
-          <p className="text-center text-sm text-text-muted">
-            প্রথমবার আসছেন?{" "}
-            <button
-              type="button"
-              onClick={() => switchTo("signup")}
-              className="font-semibold text-brand-strong underline underline-offset-4"
-            >
-              অ্যাকাউন্ট তৈরি করুন
-            </button>
-          </p>
-        ) : (
-          <p className="text-center text-sm text-text-muted">
-            আগে থেকেই অ্যাকাউন্ট আছে?{" "}
-            <button
-              type="button"
-              onClick={() => switchTo("login")}
-              className="font-semibold text-brand-strong underline underline-offset-4"
-            >
-              লগইন করুন
-            </button>
-          </p>
-        )}
 
         <p className="text-center text-sm text-text-muted">
           এখনো এনরোল করেননি?{" "}
           <a href="/#enroll" className="font-semibold text-brand-strong underline underline-offset-4">
             এনরোল করুন
+          </a>
+        </p>
+        <p className="text-center text-sm text-text-muted">
+          পাসওয়ার্ড ভুলে গেছেন?{" "}
+          <a
+            href={waLink(CONFIG.whatsappPaymentMessage)}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-semibold text-brand-strong underline underline-offset-4"
+          >
+            WhatsApp-এ জানান
           </a>
         </p>
       </form>

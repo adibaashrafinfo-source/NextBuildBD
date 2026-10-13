@@ -21,6 +21,9 @@ PENDING = "aaaaaaaa-0000-0000-0000-000000000003"  # pending enrollment
 UNCONF = "aaaaaaaa-0000-0000-0000-000000000004"  # verified enrollment but email not confirmed
 OWNER = "aaaaaaaa-0000-0000-0000-000000000005"  # admin via public.admin_emails (seeded by migration)
 OWNER_UNCONF = "aaaaaaaa-0000-0000-0000-000000000006"  # listed email, but not confirmed
+PHONEONLY = "aaaaaaaa-0000-0000-0000-000000000007"  # no email: verified enrollment linked by user_id
+PHONE_LOGIN = "01911111111@phone.nextbuildbd.local"
+PW = "secret123"
 
 
 def psql(sql, db=DB):
@@ -54,20 +57,22 @@ for f in (STUB, *MIGRATIONS):
 # the order the README prescribes — so seeding them means stepping around the trigger.
 psql(f"""
 alter table auth.users disable trigger block_admin_signup;
-insert into auth.users values
- ('{ADMIN}', 'admin@example.com', now()),
- ('{STUDENT}', 'Student@Example.com', now()),
- ('{PENDING}', 'p@example.com', now()),
- ('{UNCONF}', 'u@example.com', null),
- ('{OWNER}', 'AsrafulIslam2000@gmail.com', now()),
- ('{OWNER_UNCONF}', 'second-admin@example.com', null);
+insert into auth.users (id, email, email_confirmed_at, encrypted_password) values
+ ('{ADMIN}', 'admin@example.com', now(), extensions.crypt('{PW}', extensions.gen_salt('bf'))),
+ ('{STUDENT}', 'Student@Example.com', now(), extensions.crypt('{PW}', extensions.gen_salt('bf'))),
+ ('{PENDING}', 'p@example.com', now(), null),
+ ('{UNCONF}', 'u@example.com', null, null),
+ ('{OWNER}', 'AsrafulIslam2000@gmail.com', now(), null),
+ ('{OWNER_UNCONF}', 'second-admin@example.com', null, null),
+ ('{PHONEONLY}', '{PHONE_LOGIN}', now(), extensions.crypt('{PW}', extensions.gen_salt('bf')));
 alter table auth.users enable trigger block_admin_signup;
 insert into public.admin_emails values ('second-admin@example.com');
 insert into public.admins values ('{ADMIN}');
-insert into public.enrollments (full_name, phone, email, payment_method, sender_number, trx_id, amount, status) values
- ('Student', '01712345678', 'student@example.com', 'bkash', '01712345678', 'TRXSTUDENT1', 1499, 'verified'),
- ('Pending', '01812345678', 'p@example.com', 'nagad', '01812345678', 'TRXPENDING1', 1499, 'pending'),
- ('Unconf', '01912345678', 'u@example.com', 'rocket', '019123456781', 'TRXUNCONF1', 1499, 'verified');
+insert into public.enrollments (full_name, phone, email, payment_method, sender_number, trx_id, amount, status, user_id) values
+ ('Student', '01712345678', 'student@example.com', 'bkash', '01712345678', 'TRXSTUDENT1', 1499, 'verified', null),
+ ('Pending', '01812345678', 'p@example.com', 'nagad', '01812345678', 'TRXPENDING1', 1499, 'pending', null),
+ ('Unconf', '01912345678', 'u@example.com', 'rocket', '019123456781', 'TRXUNCONF1', 1499, 'verified', null),
+ ('NoEmail', '01911111111', null, 'bkash', '01911111111', 'TRXNOEMAIL1', 1499, 'verified', '{PHONEONLY}');
 insert into public.classes (title, published, meet_url) values ('Class 1', true, 'https://meet.google.com/abc'), ('Draft', false, null);
 update public.course_settings set whatsapp_group_link = 'https://chat.whatsapp.com/test';
 """)
@@ -119,7 +124,7 @@ cases = [
     ("unconfirmed email sees no enrollments", "authenticated", UNCONF, "select count(*) from public.enrollments", "=0"),
 
     ("admin is admin", "authenticated", ADMIN, "select public.is_admin()", "=t"),
-    ("admin sees all enrollments", "authenticated", ADMIN, "select count(*) from public.enrollments", "=6"),
+    ("admin sees all enrollments", "authenticated", ADMIN, "select count(*) from public.enrollments", "=7"),
     ("admin sees draft classes", "authenticated", ADMIN, "select count(*) from public.classes", "=2"),
     ("admin verifies; trigger stamps reviewer", "authenticated", ADMIN,
      "with u as (update public.enrollments set status = 'verified', admin_note = 'ok' where trx_id = 'TRXPENDING1' "
@@ -132,7 +137,7 @@ cases = [
     ("admin cannot insert a second settings row", "authenticated", ADMIN, "insert into public.course_settings (id) values (true)", "err:permission denied"),
 
     ("owner email (admin_emails, confirmed, any case) is admin", "authenticated", OWNER, "select public.is_admin()", "=t"),
-    ("owner sees all enrollments", "authenticated", OWNER, "select count(*) from public.enrollments", "=6"),
+    ("owner sees all enrollments", "authenticated", OWNER, "select count(*) from public.enrollments", "=7"),
     ("listed but unconfirmed email is not admin", "authenticated", OWNER_UNCONF, "select public.is_admin()", "=f"),
     ("nobody reads admin_emails", "authenticated", OWNER, "select count(*) from public.admin_emails", "err:permission denied"),
     ("anon cannot read admin_emails", "anon", None, "select count(*) from public.admin_emails", "err:permission denied"),
@@ -146,6 +151,38 @@ cases = [
      "insert into auth.users values (gen_random_uuid(), 'second-admin@example.com', now())", "err:reserved"),
     ("sign-up with an ordinary address works", "postgres", None,
      "insert into auth.users values (gen_random_uuid(), 'newstudent@example.com', now())", "ok"),
+
+    # A student who gave no email is linked to their enrollment by user_id alone.
+    ("email-less student has access", "authenticated", PHONEONLY, "select public.has_access()", "=t"),
+    ("email-less student sees only own enrollment", "authenticated", PHONEONLY,
+     "select string_agg(trx_id, ',') from public.enrollments", "=TRXNOEMAIL1"),
+    ("email-less student is not admin", "authenticated", PHONEONLY, "select public.is_admin()", "=f"),
+    ("email-less student sees published classes", "authenticated", PHONEONLY,
+     "select string_agg(title, ',') from public.classes", "=Class 1"),
+
+    # login_email() turns a mobile number or an email into the address to sign in with.
+    ("login by phone returns the sign-in address", "anon", None,
+     f"select coalesce(public.login_email('01911111111', '{PW}'), 'none')", f"={PHONE_LOGIN}"),
+    ("login by email returns the sign-in address", "anon", None,
+     f"select coalesce(public.login_email('Admin@Example.com', '{PW}'), 'none')", "=admin@example.com"),
+    ("login with the wrong password reveals nothing", "anon", None,
+     "select coalesce(public.login_email('01911111111', 'wrong-password'), 'none')", "=none"),
+    ("login with an unknown number reveals nothing", "anon", None,
+     f"select coalesce(public.login_email('01700000000', '{PW}'), 'none')", "=none"),
+    ("login does not match an account without a password", "anon", None,
+     f"select coalesce(public.login_email('p@example.com', '{PW}'), 'none')", "=none"),
+
+    # An applicant may stamp their own account on the row they submit, and nobody else's.
+    ("applicant cannot claim another account's row", "authenticated", STUDENT,
+     "insert into public.enrollments (full_name, phone, email, payment_method, sender_number, trx_id, amount, user_id) "
+     f"values ('X Y', '01612345670', 'x1@example.com', 'bkash', '01612345670', 'CLAIM00001', 1499, '{ADMIN}')",
+     "err:row-level security"),
+    ("applicant may claim their own row", "authenticated", STUDENT,
+     "insert into public.enrollments (full_name, phone, email, payment_method, sender_number, trx_id, amount, user_id) "
+     f"values ('X Y', '01612345671', 'x2@example.com', 'bkash', '01612345671', 'CLAIM00002', 1499, '{STUDENT}')", "ok"),
+    ("enrollment without an email is allowed", "anon", None,
+     "insert into public.enrollments (full_name, phone, email, payment_method, sender_number, trx_id, amount) "
+     "values ('No Mail', '01612345672', null, 'bkash', '01612345672', 'NOEMAIL002', 1499)", "ok"),
 ]
 
 passed = 0

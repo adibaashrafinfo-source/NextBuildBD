@@ -6,12 +6,18 @@ do $$ begin
 end $$;
 grant usage on schema public to anon, authenticated, service_role;
 
+-- Supabase keeps pgcrypto here; public.login_email() calls extensions.crypt().
+create schema if not exists extensions;
+grant usage on schema extensions to anon, authenticated, service_role;
+create extension if not exists pgcrypto with schema extensions;
+
 create schema auth;
 grant usage on schema auth to anon, authenticated, service_role;
 create table auth.users (
   id uuid primary key,
   email text,
-  email_confirmed_at timestamptz
+  email_confirmed_at timestamptz,
+  encrypted_password text
 );
 
 create function auth.jwt() returns jsonb language sql stable as $$
