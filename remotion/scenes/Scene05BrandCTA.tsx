@@ -1,5 +1,6 @@
 import { AbsoluteFill, useCurrentFrame } from "remotion";
 import { COLORS, EASE } from "../theme";
+import { PHONE } from "../brand";
 import { beat } from "../timeline";
 import { prog } from "../anim";
 import { AnimatedOrangeRibbon } from "../components/AnimatedOrangeRibbon";
@@ -76,7 +77,13 @@ export const Scene05BrandCTA: React.FC = () => {
         taglineDelay={B("tagline")}
       />
 
-      <WhatsAppFloatingButton delay={B("whatsapp")} size={108} inset={{ right: 104, bottom: 92 }} />
+      <WhatsAppFloatingButton
+        delay={B("whatsapp")}
+        labelDelay={B("phoneLabel")}
+        label={PHONE}
+        size={108}
+        inset={{ right: 104, bottom: 92 }}
+      />
 
       {wipe > 0.001 ? (
         <AbsoluteFill style={{ background: COLORS.white, opacity: wipe, pointerEvents: "none" }} />

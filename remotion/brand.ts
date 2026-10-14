@@ -14,14 +14,17 @@ export const BRAND = {
 } as const;
 
 /**
- * Click destination for the floating WhatsApp button.
- *
- * Intentionally `null`: no number is invented here. The rendered MP4 shows the
- * button as a visual element either way. Set this to a real wa.me link (e.g.
- * "https://wa.me/8801XXXXXXXXX") and the button becomes clickable in the
- * interactive <Player> preview.
+ * Contact number supplied by the owner and read aloud in the voice-over at
+ * 27.58s. Shown on screen beside the WhatsApp button at that moment.
  */
-export const WHATSAPP_URL: string | null = null;
+export const PHONE = "01719686459";
+
+/**
+ * Click destination for the floating WhatsApp button, built from PHONE in
+ * international form. Only meaningful in the interactive <Player> preview —
+ * an MP4 carries no links. Set to null to render the button without a target.
+ */
+export const WHATSAPP_URL: string | null = `https://wa.me/88${PHONE}`;
 
 /** Copy used on screen. Exactly the storyboard wording — nothing added. */
 export const COPY = {

@@ -67,65 +67,70 @@ export const sceneFrames = (name: SceneName) =>
  */
 export const BEATS = {
   hook: {
+    // Sentence: "আপনার ব্যবসার কি এখনো কোনো প্রফেশনাল ওয়েবসাইট নেই?" (0.06-3.04)
     ribbonIn: 0.0,
-    ribbonSecond: 0.28,
-    browserIn: 0.45,
-    headlineLine1: 0.7,
-    headlineLine2: 1.35,
-    floatingCard: 1.72,
-    cursorIn: 1.82,
-    cursorClick: 2.5,
-    outro: 2.92,
+    browserIn: 0.3,
+    headlineLine1: 0.35, // 0.35s — on "আপনার ব্যবসার" (your business)
+    ribbonSecond: 0.5,
+    headlineLine2: 1.55, // 1.55s — lands before "প্রফেশনাল ওয়েবসাইট" at ~1.9s
+    floatingCard: 1.9,
+    cursorIn: 2.0,
+    cursorClick: 2.6,
+    outro: 2.95,
   },
   opportunity: {
-    // 0.26 === 3.56s absolute, the onset of the second spoken sentence.
+    // "তাহলে প্রতিদিন হারাচ্ছেন সম্ভাব্য কাস্টমারের বিশ্বাস" (3.56-6.76)
+    // "ও নতুন ব্যবসার সুযোগ!" (6.98-8.42)
     siteIn: 0.0,
-    headlineLine1: 0.26,
-    glassPanels: 0.55,
-    headlineLine2: 1.2,
-    // 3.68 === 6.98s absolute, the onset of the following phrase.
-    accentSweep: 3.68,
-    lightSweep: 4.8,
+    headlineLine1: 0.6, // 3.90s — as the "losing trust" clause begins
+    glassPanels: 1.1,
+    headlineLine2: 3.68, // 6.98s — exactly the "opportunity" clause onset
+    accentSweep: 4.76, // 8.06s — the orange sweep hits the word "সুযোগ"
+    lightSweep: 4.95,
   },
   showcase: {
+    // "Abrar IT দিচ্ছে" (8.92) · "আধুনিক," (10.38) · "দ্রুতগতির" (11.12)
+    // "ও মোবাইল-ফ্রেন্ডলি ওয়েবসাইট," (12.10) · rest of the sentence to 17.20
     browserIn: 0.0,
-    navDraw: 0.25,
+    navDraw: 0.25, // 8.92s — on "Abrar IT দিচ্ছে"
     heroIn: 0.5,
-    cardsIn: 0.8,
-    scrollStart: 0.9,
-    hoverCta: 1.71,
-    scrollEnd: 2.2,
-    // The split and the three labels each land on a measured phrase onset:
-    // 11.12 / 12.10 / 14.06 / 15.90 absolute.
-    devicesSplit: 2.45,
-    labelUiUx: 3.43,
-    labelResponsive: 5.39,
-    labelPerformance: 7.23,
+    cardsIn: 0.85,
+    scrollStart: 1.0,
+    hoverCta: 1.45,
+    labelUiUx: 1.71, // 10.38s — on "আধুনিক" (modern)
+    labelPerformance: 2.45, // 11.12s — on "দ্রুতগতির" (fast)
+    scrollEnd: 2.9,
+    devicesSplit: 3.43, // 12.10s — devices fan out on "মোবাইল-ফ্রেন্ডলি"
+    labelResponsive: 4.15, // 12.82s — still inside "ও মোবাইল-ফ্রেন্ডলি ওয়েবসাইট",
+    // by which point the devices have fanned out far enough to clear the label
     outro: 8.42,
   },
   solutions: {
+    // "বিজনেস ওয়েবসাইট হোক কিংবা ই-কমার্স স্টোর—" (17.68-20.20)
+    // "...স্মার্ট ও কাস্টমাইজড ওয়েব সলিউশন।" (20.60-23.28)
     panel1: 0.0,
+    label1: 0.26, // 17.70s — on "বিজনেস ওয়েবসাইট"
     panel2: 0.35,
-    label1: 0.4,
     panel3: 0.7,
-    align: 1.6,
-    label2: 1.6,
-    // 3.16 === 20.60s absolute, the onset of the closing solutions phrase.
-    label3: 3.16,
-    reflectionSweep: 4.3,
+    align: 1.5,
+    label2: 1.92, // 19.36s — on "ই-কমার্স স্টোর"
+    label3: 4.4, // 21.84s — on "স্মার্ট ও কাস্টমাইজড ওয়েব সলিউশন"
+    reflectionSweep: 3.1,
     outro: 5.78,
   },
   brand: {
+    // "আপনার ব্যবসাকে অনলাইনে এগিয়ে নিতে আজই যোগাযোগ করুন" (23.90-27.30)
+    // "01719686459" (27.58-29.26) · "Abrar IT" (29.60) · tagline (30.42)
     whiteWipe: 0.0,
-    // Onsets at 23.90 / 27.58 / 29.60 / 30.42 absolute.
-    logoIn: 0.31,
-    headline: 1.3,
-    whatsapp: 2.6,
-    ctaButton: 3.4,
-    ctaLabel: 3.99,
-    logoAccent: 6.01,
-    tagline: 6.83,
-    hold: 7.4,
+    logoIn: 0.31, // 23.90s — phrase onset
+    headline: 1.2, // 24.79s
+    ctaButton: 2.6, // 26.19s
+    ctaLabel: 3.2, // 26.79s — URL wipes in on "যোগাযোগ করুন" (contact)
+    whatsapp: 3.99, // 27.58s — button lands as the number is read aloud
+    phoneLabel: 4.25, // 27.84s — the number appears beside it
+    logoAccent: 6.01, // 29.60s — logo pulses on the spoken "Abrar IT"
+    tagline: 6.83, // 30.42s — on "Your Journey to Digital Excellence!"
+    hold: 7.6,
   },
 } as const;
 

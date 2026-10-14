@@ -18,14 +18,53 @@ import {
 
 const B = (name: Parameters<typeof beat<"showcase">>[1]) => beat("showcase", name);
 
-/** Hero browser geometry before the split, and the desktop slot after it. */
-const BIG = { w: 1380, h: 812, x: 960, y: 548 };
+/**
+ * Hero browser geometry before the split, and the desktop slot after it.
+ *
+ * The hero sits right of centre and high in frame so the two labels that land
+ * before the split ("আধুনিক" at 10.38s, "দ্রুতগতির" at 11.12s) have clean
+ * margins to appear in rather than covering the interface.
+ */
+const BIG = { w: 1240, h: 730, x: 1030, y: 470 };
 const DESKTOP = { w: 836, h: 522, x: 566, y: 528 };
 
-const LABELS: readonly { text: string; beat: Parameters<typeof beat<"showcase">>[1]; x: number; y: number; phase: number }[] = [
-  { text: COPY.showcase.labels[0], beat: "labelUiUx", x: 236, y: 168, phase: 0 },
-  { text: COPY.showcase.labels[1], beat: "labelResponsive", x: 1318, y: 166, phase: 0.6 },
-  { text: COPY.showcase.labels[2], beat: "labelPerformance", x: 486, y: 918, phase: 1.2 },
+type ShowcaseLabel = {
+  text: string;
+  beat: Parameters<typeof beat<"showcase">>[1];
+  /** Where it floats while the single browser is still on screen. */
+  pre: { x: number; y: number };
+  /** Where it settles once the three devices have fanned out. */
+  post: { x: number; y: number };
+  phase: number;
+};
+
+/**
+ * Two of the three labels land before the device split (on "আধুনিক" and
+ * "দ্রুতগতির"), so they first appear as glass overlays on the browser and
+ * travel outward as the composition reorganises.
+ */
+const LABELS: readonly ShowcaseLabel[] = [
+  {
+    text: COPY.showcase.labels[0], // MODERN UI/UX
+    beat: "labelUiUx",
+    pre: { x: 222, y: 330 },
+    post: { x: 236, y: 168 },
+    phase: 0,
+  },
+  {
+    text: COPY.showcase.labels[1], // RESPONSIVE DESIGN — arrives with the split
+    beat: "labelResponsive",
+    pre: { x: 1318, y: 166 },
+    post: { x: 1318, y: 166 },
+    phase: 0.6,
+  },
+  {
+    text: COPY.showcase.labels[2], // FAST PERFORMANCE
+    beat: "labelPerformance",
+    pre: { x: 430, y: 952 },
+    post: { x: 486, y: 918 },
+    phase: 1.2,
+  },
 ];
 
 /**
@@ -179,13 +218,15 @@ export const Scene03Showcase: React.FC = () => {
           return null;
         }
         const parallax = osc(frame, 240, label.phase) * 9;
+        const x = interpolate(split, [0, 1], [label.pre.x, label.post.x]);
+        const y = interpolate(split, [0, 1], [label.pre.y, label.post.y]);
         return (
           <div
             key={label.text}
             style={{
               position: "absolute",
-              left: label.x,
-              top: label.y,
+              left: x,
+              top: y,
               transform: `translate(-50%, -50%) translateY(${(1 - s) * 44 + parallax}px) scale(${0.9 + s * 0.1})`,
               opacity: Math.min(1, s * 1.5),
               zIndex: 6,

@@ -1,7 +1,7 @@
 import type { CSSProperties } from "react";
 import { useCurrentFrame, useVideoConfig } from "remotion";
-import { COLORS, SPRINGS } from "../theme";
-import { osc, springAt } from "../anim";
+import { COLORS, EASE, FONTS, SPRINGS } from "../theme";
+import { osc, prog, springAt } from "../anim";
 import { WHATSAPP_URL } from "../brand";
 
 export type WhatsAppFloatingButtonProps = {
@@ -10,6 +10,10 @@ export type WhatsAppFloatingButtonProps = {
   size?: number;
   /** Distance from the bottom-right corner of the frame. */
   inset?: { right: number; bottom: number };
+  /** Contact number shown in a glass pill to the left of the button. */
+  label?: string;
+  /** Frame the label wipes in — pin it to where the number is spoken. */
+  labelDelay?: number;
   style?: CSSProperties;
 };
 
@@ -28,10 +32,16 @@ export const WhatsAppFloatingButton: React.FC<WhatsAppFloatingButtonProps> = ({
   delay = 0,
   size = 104,
   inset = { right: 96, bottom: 84 },
+  label,
+  labelDelay,
   style,
 }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
+  const labelIn =
+    label === undefined || labelDelay === undefined
+      ? 0
+      : prog(frame, labelDelay, 18, EASE.out);
 
   const s = springAt({ frame, fps, delay, config: SPRINGS.pop });
   if (s <= 0.001) {
@@ -78,10 +88,47 @@ export const WhatsAppFloatingButton: React.FC<WhatsAppFloatingButtonProps> = ({
     </div>
   );
 
+  const pill =
+    labelIn > 0.001 ? (
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          height: size * 0.66,
+          padding: `0 ${size * 0.26}px`,
+          marginRight: size * 0.17,
+          borderRadius: 999,
+          background: "rgba(255,255,255,0.86)",
+          backdropFilter: "blur(16px) saturate(150%)",
+          WebkitBackdropFilter: "blur(16px) saturate(150%)",
+          border: "1px solid rgba(255,255,255,0.95)",
+          boxShadow:
+            "0 18px 40px -22px rgba(17,17,17,0.26), inset 0 1px 0 rgba(255,255,255,1)",
+          transform: `translateX(${(1 - labelIn) * 26}px)`,
+          opacity: labelIn,
+          whiteSpace: "nowrap",
+        }}
+      >
+        <span
+          style={{
+            fontFamily: FONTS.display,
+            fontSize: size * 0.3,
+            fontWeight: 800,
+            letterSpacing: "0.04em",
+            color: COLORS.ink,
+          }}
+        >
+          {label}
+        </span>
+      </div>
+    ) : null;
+
   return (
     <div
       style={{
         position: "absolute",
+        display: "flex",
+        alignItems: "center",
         right: inset.right,
         bottom: inset.bottom,
         transform: `translateY(${(1 - s) * 60 + float}px) scale(${0.72 + s * 0.28})`,
@@ -90,6 +137,7 @@ export const WhatsAppFloatingButton: React.FC<WhatsAppFloatingButtonProps> = ({
         ...style,
       }}
     >
+      {pill}
       {WHATSAPP_URL ? (
         <a
           href={WHATSAPP_URL}
