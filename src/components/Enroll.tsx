@@ -270,8 +270,8 @@ function EnrollForm() {
         // from the mobile number when no email was given.
         const authEmail = payload.email ?? authEmailForPhone(phone);
         const signedUp = await supabase.auth.signUp({ email: authEmail, password: values.password });
-        if (signedUp.error) {
-          // Already enrolled once: carry on under that account if this is the same password.
+        if (signedUp.error?.code === "user_already_exists") {
+          // Already has an account (e.g. an earlier attempt): carry on under it if the password matches.
           const existing = await supabase.auth.signInWithPassword({ email: authEmail, password: values.password });
           if (existing.error) {
             setSubmitError("account");
@@ -279,13 +279,20 @@ function EnrollForm() {
             return;
           }
           payload.user_id = existing.data.user.id;
+        } else if (signedUp.error || !signedUp.data.session) {
+          // No session means Auth → "Confirm email" is on, and the row could not be tied to the account.
+          console.error("[NextBuildBD] sign-up failed:", signedUp.error ?? "no session (is Confirm email on?)");
+          setSubmitError("failed");
+          setStatus("idle");
+          return;
         } else {
-          payload.user_id = signedUp.data.user?.id ?? null;
+          payload.user_id = signedUp.data.session.user.id;
         }
 
         // Insert only: students may not read other rows back (RLS), so no .select().
         const { error } = await supabase.from("enrollments").insert(payload);
         if (error) {
+          console.error("[NextBuildBD] enrollment insert failed:", error);
           setSubmitError(error.code === UNIQUE_VIOLATION ? "duplicate" : "failed");
           setStatus("idle");
           return;
@@ -476,7 +483,7 @@ function EnrollForm() {
                   {submitError === "duplicate"
                     ? "এই TrxID দিয়ে আগেই জমা দেওয়া হয়েছে। স্ট্যাটাস দেখতে "
                     : submitError === "account"
-                      ? "এই নম্বরে আগে থেকেই অ্যাকাউন্ট আছে। আগের পাসওয়ার্ডটি দিন, অথবা "
+                      ? "এই মোবাইল নম্বর বা ইমেইলে আগে থেকেই অ্যাকাউন্ট আছে। প্রথমবার যে পাসওয়ার্ড দিয়েছিলেন সেটি দিন, অথবা "
                       : "জমা দেওয়া যায়নি। ইন্টারনেট সংযোগ দেখে আবার চেষ্টা করুন, অথবা "}
                   {submitError === "duplicate" ? (
                     <a href="/login" className="font-semibold text-brand-strong underline underline-offset-4">
