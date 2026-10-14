@@ -17,6 +17,22 @@ npm run build     # type-check + production build into dist/
 npm run preview   # serve the production build
 ```
 
+## Promo video (Abrar IT)
+
+A separate deliverable that lives in this repo alongside the landing page: a
+30-second, 1920x1080, **silent** motion-graphics promo for Abrar IT's Website
+Design & Development service, built with Remotion.
+
+```bash
+npm run video:studio   # interactive preview with a scrubbable timeline
+npm run video:render   # out/abrar-it-promo-30s.mp4  (900 frames @ 30fps)
+```
+
+Source is in `remotion/`; every timing lives in `remotion/timeline.ts`. Full
+documentation, including how to attach your own voice-over afterwards, is in
+**[VIDEO.md](VIDEO.md)**. It shares nothing with the site build but the
+`public/` folder.
+
 ## Where things live
 
 | What | Where |

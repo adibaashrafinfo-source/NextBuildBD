@@ -27,4 +27,9 @@ export default tseslint.config(
     files: ["src/components/ui/**/*.tsx"],
     rules: { "react-refresh/only-export-components": "off" },
   },
+  {
+    // Remotion modules export constants and helpers alongside components.
+    files: ["remotion/**/*.{ts,tsx}", "remotion.config.ts"],
+    rules: { "react-refresh/only-export-components": "off" },
+  },
 );
