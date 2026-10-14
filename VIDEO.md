@@ -223,6 +223,33 @@ npm run video:render:silent     # same composition, --muted, no audio stream
 Or remove the `<Audio>` line from `remotion/AbrarITPromo.tsx`; nothing else
 depends on the audio file existing.
 
+## 4b. The Reels cut (9:16)
+
+`AbrarITReel` is the same film rebuilt for a tall 1080 × 1920 frame — Instagram
+and Facebook Reels, YouTube Shorts, Stories.
+
+```bash
+npm run video:reel      # out/abrar-it-reel-9x16.mp4
+```
+
+It is a re-layout, not a crop. The same narration, the same cue sheet
+(`CUES` in `remotion/timeline.ts`) and the same components drive it, so a retimed
+word moves in both cuts; only the arrangement changes (`remotion/reel/`):
+
+* text sits above or below the devices instead of beside them;
+* in scene 3 the browser window is 1440 × 1080 so it is exactly as tall as the
+  phone it turns into, and the final shot stacks the desktop above a
+  tablet and phone that overlap it;
+* in scene 4 the camera pans across three windows with the neighbours peeking in;
+* in scene 5 the logo, headline, call to action, spoken number and tagline are
+  one centred column.
+
+Everything that matters stays inside the platforms' safe area (`reel/layout.ts`):
+about 250 px clear at the top, 350 px at the bottom and 120 px on the right, where
+the app draws its own interface.
+
+---
+
 ## 5. Project structure
 
 ```
@@ -238,7 +265,8 @@ remotion/
   fonts.ts                    local woff2 loader (Anek Bangla, Noto Sans Bengali…)
   anim.ts  ribbonGeometry.ts  prog / kf / springAt helpers; ribbon maths
 
-  scenes/                     Scene01Hook … Scene05BrandCTA
+  scenes/                     Scene01Hook … Scene05BrandCTA   (16:9)
+  reel/                       AbrarITReel + ReelScene01 … 05 (9:16), layout.ts
   components/
     AnimatedHeadline.tsx      Bangla word-by-word masked reveal
     WebsiteBrowserMockup.tsx  browser chrome + page viewport

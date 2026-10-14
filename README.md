@@ -28,6 +28,7 @@ narration in `public/voiceover.mp3` (31.8s, 954 frames @ 30fps).
 npm run video:studio          # interactive preview with a scrubbable timeline
 npm run video:render          # out/abrar-it-promo-v2.mp4  (with audio)
 npm run video:render:silent   # same film with no audio track
+npm run video:reel            # 9:16 Reels cut, 1080x1920
 ```
 
 Source is in `remotion/`; every timing lives in `remotion/timeline.ts`, and the

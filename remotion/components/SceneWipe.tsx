@@ -2,9 +2,8 @@ import { AbsoluteFill, useCurrentFrame } from "remotion";
 import { COLORS, EASE } from "../theme";
 import { HEIGHT, WIDTH } from "../timeline";
 
-const C = 380;
-const PW = 2 * WIDTH + 2 * C;
-const PATH = `M ${C},0 L ${PW - C},0 C ${PW + C * 0.35},${HEIGHT * 0.18} ${PW + C * 0.35},${HEIGHT * 0.82} ${PW - C},${HEIGHT} L ${C},${HEIGHT} C ${-C * 0.35},${HEIGHT * 0.82} ${-C * 0.35},${HEIGHT * 0.18} ${C},0 Z`;
+const buildPath = (pw: number, c: number, h: number) =>
+  `M ${c},0 L ${pw - c},0 C ${pw + c * 0.35},${h * 0.18} ${pw + c * 0.35},${h * 0.82} ${pw - c},${h} L ${c},${h} C ${-c * 0.35},${h * 0.82} ${-c * 0.35},${h * 0.18} ${c},0 Z`;
 
 /**
  * The orange swash that carries the film from one scene to the next.
@@ -18,14 +17,20 @@ export const SceneWipe: React.FC<{
   cuts: ReadonlyArray<number>;
   /** Half the sweep length, in frames. */
   half?: number;
-}> = ({ cuts, half = 9 }) => {
+  /** Canvas size; defaults to the 1920x1080 landscape film. */
+  width?: number;
+  height?: number;
+}> = ({ cuts, half = 9, width = WIDTH, height = HEIGHT }) => {
   const frame = useCurrentFrame();
+  const C = Math.round(width * 0.2);
+  const PW = 2 * width + 2 * C;
+  const PATH = buildPath(PW, C, height);
   const cut = cuts.find((c) => Math.abs(frame - c) <= half + 4);
   if (cut === undefined) return null;
 
   const layer = (delay: number) => {
     const p = Math.max(0, Math.min(1, (frame - (cut - half) - delay) / (half * 2)));
-    return -PW + (WIDTH + PW) * EASE.inOut(p);
+    return -PW + (width + PW) * EASE.inOut(p);
   };
 
   return (
@@ -37,8 +42,8 @@ export const SceneWipe: React.FC<{
         <svg
           key={i}
           width={PW}
-          height={HEIGHT}
-          viewBox={`0 0 ${PW} ${HEIGHT}`}
+          height={height}
+          viewBox={`0 0 ${PW} ${height}`}
           style={{ position: "absolute", left: 0, top: 0, transform: `translate3d(${layer(l.delay)}px, 0, 0)` }}
         >
           <defs>

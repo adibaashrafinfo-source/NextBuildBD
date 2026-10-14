@@ -21,6 +21,9 @@ export type RibbonProps = {
   /** Vertical drift amplitude, px. */
   drift?: number;
   gradientId: string;
+  /** Canvas the curve is drawn in. Defaults to 1920x1080. */
+  viewW?: number;
+  viewH?: number;
 };
 
 /**
@@ -38,6 +41,8 @@ export const AnimatedOrangeRibbon: React.FC<RibbonProps> = ({
   tipGlow = true,
   drift = 10,
   gradientId,
+  viewW = 1920,
+  viewH = 1080,
 }) => {
   const frame = useCurrentFrame();
   const p = prog(frame, delay, duration, EASE.out);
@@ -58,7 +63,7 @@ export const AnimatedOrangeRibbon: React.FC<RibbonProps> = ({
 
   return (
     <svg
-      viewBox="0 0 1920 1080"
+      viewBox={`0 0 ${viewW} ${viewH}`}
       style={{
         position: "absolute",
         inset: 0,
