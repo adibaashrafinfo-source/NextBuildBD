@@ -1,82 +1,69 @@
+import { ArrowUpRight } from "lucide-react";
 import { useCurrentFrame, useVideoConfig } from "remotion";
 import { BRAND, COPY } from "../brand";
-import { COLORS, EASE, FONTS, SPRINGS } from "../theme";
+import { COLORS, EASE, FONTS, SHADOWS, SPRINGS } from "../theme";
 import { osc, prog, springAt } from "../anim";
-import { AnimatedHeadline, MaskedLine } from "./AnimatedHeadline";
+import { AnimatedHeadline, line } from "./AnimatedHeadline";
 import { LogoReveal } from "./LogoReveal";
 
 export type FinalBrandCTAProps = {
   logoDelay: number;
-  headlineDelay: number;
-  /** Frame the orange button rises in. */
+  logoAccentDelay: number;
+  lead: ReadonlyArray<number>;
+  headline: ReadonlyArray<number>;
   ctaDelay: number;
-  /** Frame the URL inside the button reveals. */
-  ctaLabelDelay: number;
-  /** Frame the logo pulses back to life on a later beat. */
-  logoAccentDelay?: number;
   taglineDelay: number;
 };
 
-/** Brand lock-up, primary call to action and tagline for the closing frame. */
+/** Brand lock-up, the call to action and the tagline for the closing frame. */
 export const FinalBrandCTA: React.FC<FinalBrandCTAProps> = ({
   logoDelay,
-  headlineDelay,
-  ctaDelay,
-  ctaLabelDelay,
   logoAccentDelay,
+  lead,
+  headline,
+  ctaDelay,
   taglineDelay,
 }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
 
-  const ctaSpring = springAt({ frame, fps, delay: ctaDelay, config: SPRINGS.entrance });
-  const labelReveal = prog(frame, ctaLabelDelay, 20, EASE.out);
-
-  // Refined hover-style pass: a lift plus a specular sweep across the button.
-  const hoverStart = ctaLabelDelay + 16;
-  const hoverIn = prog(frame, hoverStart, 14, EASE.out);
-  const hoverOut = prog(frame, hoverStart + 30, 18, EASE.out);
-  const hover = hoverIn - hoverOut;
-  const sheen = prog(frame, hoverStart + 2, 32, EASE.inOut);
-
-  const idle = osc(frame - ctaDelay, 210) * 2.5 * ctaSpring;
+  const cta = springAt({ frame, fps, delay: ctaDelay, config: SPRINGS.entrance });
+  const label = prog(frame, ctaDelay + 6, 22, EASE.out);
+  const hoverStart = ctaDelay + 30;
+  const hover = prog(frame, hoverStart, 14, EASE.out) - prog(frame, hoverStart + 34, 20, EASE.out);
+  const sheen = prog(frame, hoverStart + 2, 34, EASE.inOut);
+  const idle = osc(frame - ctaDelay, 200) * 3 * cta;
+  const tag = prog(frame, taglineDelay, 22, EASE.out);
 
   return (
-    <div
-      style={{
-        position: "absolute",
-        inset: 0,
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        gap: 0,
-      }}
-    >
-      <LogoReveal
-        width={660}
-        delay={logoDelay}
-        duration={32}
-        accentDelay={logoAccentDelay}
-        style={{ marginBottom: 64 }}
-      />
+    <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center" }}>
+      <div style={{ marginTop: 92 }}>
+        <LogoReveal width={620} delay={logoDelay} duration={30} accentDelay={logoAccentDelay} />
+      </div>
 
-      <AnimatedHeadline
-        lines={[{ text: COPY.brand.headline }]}
-        lineDelays={[headlineDelay]}
-        fontSize={78}
-        align="center"
-        weight={800}
-        letterSpacing="-0.022em"
-        wordStagger={3}
-        style={{ marginBottom: 52 }}
-      />
+      <div style={{ marginTop: 52 }}>
+        <AnimatedHeadline
+          align="center"
+          fontSize={50}
+          weight={600}
+          color={COLORS.inkSoft}
+          lines={[line(COPY.cta.lead, lead.slice())]}
+        />
+      </div>
+      <div style={{ marginTop: 6 }}>
+        <AnimatedHeadline
+          align="center"
+          fontSize={124}
+          lines={[line(COPY.cta.headline, headline.slice(), 4, "all")]}
+        />
+      </div>
 
-      {/* Primary CTA */}
+      {/* primary CTA */}
       <div
         style={{
-          transform: `translateY(${(1 - ctaSpring) * 44 - hover * 6 + idle}px) scale(${(0.9 + ctaSpring * 0.1) * (1 + hover * 0.025)})`,
-          opacity: Math.min(1, ctaSpring * 1.5),
+          marginTop: 56,
+          transform: `translateY(${(1 - cta) * 50 - hover * 6 + idle}px) scale(${(0.92 + cta * 0.08) * (1 + hover * 0.03)})`,
+          opacity: Math.min(1, cta * 1.6),
         }}
       >
         <div
@@ -85,40 +72,43 @@ export const FinalBrandCTA: React.FC<FinalBrandCTAProps> = ({
             overflow: "hidden",
             display: "flex",
             alignItems: "center",
-            justifyContent: "center",
-            minWidth: 560,
+            gap: 30,
             height: 116,
-            padding: "0 62px",
+            padding: "0 30px 0 60px",
             borderRadius: 999,
-            background: `linear-gradient(176deg, ${COLORS.orangeSoft} -34%, ${COLORS.orange} 46%, ${COLORS.orangeDeep} 150%)`,
-            boxShadow: `0 ${26 + hover * 16}px ${56 + hover * 24}px -20px rgba(241,89,34,${0.5 + hover * 0.16}), 0 8px 18px -8px rgba(241,89,34,0.42), inset 0 2px 0 rgba(255,255,255,0.38), inset 0 -3px 0 rgba(120,36,8,0.2)`,
+            background: `linear-gradient(176deg, ${COLORS.orangeSoft} -40%, ${COLORS.orange} 46%, ${COLORS.orangeDeep} 160%)`,
+            boxShadow: `${SHADOWS.button}, 0 ${hover * 22}px ${hover * 40}px -18px rgba(241,89,34,0.6)`,
           }}
         >
           <span
             style={{
-              display: "inline-block",
-              overflow: "hidden",
-              position: "relative",
+              fontFamily: FONTS.latin,
+              fontSize: 46,
+              fontWeight: 800,
+              letterSpacing: "0.005em",
+              color: "#fff",
+              whiteSpace: "nowrap",
+              clipPath: `inset(0 ${(1 - label) * 100}% 0 0)`,
+              transform: `translateY(${(1 - label) * 14}%)`,
+              opacity: label,
             }}
           >
-            <span
-              style={{
-                display: "inline-block",
-                fontFamily: FONTS.display,
-                fontSize: 38,
-                fontWeight: 800,
-                letterSpacing: "0.015em",
-                color: COLORS.white,
-                whiteSpace: "nowrap",
-                clipPath: `inset(0 ${(1 - labelReveal) * 100}% 0 0)`,
-                transform: `translateY(${(1 - labelReveal) * 16}%)`,
-                opacity: labelReveal,
-              }}
-            >
-              {BRAND.url}
-            </span>
+            {BRAND.url}
           </span>
-
+          <span
+            style={{
+              width: 74,
+              height: 74,
+              borderRadius: 999,
+              background: "#fff",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              transform: `translate(${hover * 3}px, ${-hover * 3}px)`,
+            }}
+          >
+            <ArrowUpRight size={38} color={COLORS.orange} strokeWidth={2.8} />
+          </span>
           {sheen > 0 && sheen < 1 ? (
             <span
               style={{
@@ -126,11 +116,9 @@ export const FinalBrandCTA: React.FC<FinalBrandCTAProps> = ({
                 top: "-60%",
                 bottom: "-60%",
                 left: `${-30 + sheen * 150}%`,
-                width: "22%",
+                width: "20%",
                 transform: "rotate(18deg)",
-                background:
-                  "linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.65) 50%, rgba(255,255,255,0) 100%)",
-                filter: "blur(8px)",
+                background: "linear-gradient(90deg, rgba(255,255,255,0), rgba(255,255,255,0.6), rgba(255,255,255,0))",
                 opacity: Math.sin(sheen * Math.PI),
               }}
             />
@@ -138,16 +126,20 @@ export const FinalBrandCTA: React.FC<FinalBrandCTAProps> = ({
         </div>
       </div>
 
-      <div style={{ marginTop: 52 }}>
-        <MaskedLine
-          delay={taglineDelay}
-          fontSize={34}
-          weight={500}
-          color={COLORS.muted}
-          letterSpacing="0.085em"
-        >
-          {BRAND.tagline}
-        </MaskedLine>
+      <div
+        style={{
+          marginTop: 48,
+          fontFamily: FONTS.latin,
+          fontSize: 31,
+          fontWeight: 500,
+          letterSpacing: "0.09em",
+          color: COLORS.muted,
+          clipPath: `inset(0 ${(1 - tag) * 100}% 0 0)`,
+          opacity: tag,
+          transform: `translateY(${(1 - tag) * 12}px)`,
+        }}
+      >
+        {BRAND.tagline}
       </div>
     </div>
   );

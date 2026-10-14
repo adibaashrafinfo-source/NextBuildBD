@@ -9,37 +9,40 @@ import { Easing } from "remotion";
  */
 export const COLORS = {
   white: "#FFFFFF",
+  mist: "#F3F2EE",
+  mistDeep: "#E9E7E1",
+  ink: "#0F0F0F",
+  inkSoft: "#2B2A28",
+  muted: "#7B7A74",
+  line: "#E6E4DE",
   orange: "#F15922",
-  orangeDeep: "#D2460F",
+  orangeDeep: "#C93E0F",
   orangeSoft: "#FF8A5C",
-  ink: "#111111",
-  inkSoft: "#2A2A28",
-  warmGray: "#F5F5F3",
-  warmGrayDeep: "#E9E8E3",
-  muted: "#8A8A83",
-  line: "#E4E3DE",
+  peach: "#FFEDE5",
+  peachDeep: "#FAD3C2",
   whatsapp: "#25D366",
   whatsappDeep: "#12924A",
 } as const;
 
 export const FONTS = {
-  display: "'Manrope', 'Inter', system-ui, sans-serif",
-  body: "'Inter', system-ui, sans-serif",
+  /** Display type: Anek Bangla carries both Bangla and Latin. */
+  display: "'Anek Bangla', 'Manrope', sans-serif",
+  /** Interface type inside the website mockups. */
+  ui: "'Noto Sans Bengali', 'Inter', sans-serif",
+  /** Latin UI details: URLs, wordmarks. */
+  latin: "'Manrope', 'Inter', sans-serif",
 } as const;
 
-/** Cinematic easings — slow out, confident settle. No bounce. */
+/** Cinematic easings — confident settle, no bounce. */
 export const EASE = {
-  /** Default scene/element entrance. */
   out: Easing.bezier(0.16, 1, 0.3, 1),
-  /** Softer, for long camera moves. */
+  expo: Easing.bezier(0.19, 1, 0.22, 1),
   camera: Easing.bezier(0.25, 0.8, 0.25, 1),
-  /** Symmetrical, for sweeps and wipes. */
   inOut: Easing.bezier(0.65, 0, 0.35, 1),
-  /** Quick snap for UI micro-interactions. */
+  soft: Easing.bezier(0.4, 0, 0.2, 1),
   snap: Easing.bezier(0.2, 0.9, 0.2, 1),
 } as const;
 
-/** Spring presets used across the scenes. */
 export const SPRINGS = {
   entrance: { damping: 200, stiffness: 110, mass: 0.9 },
   soft: { damping: 200, stiffness: 70, mass: 1.1 },
@@ -47,14 +50,15 @@ export const SPRINGS = {
 } as const;
 
 export const SHADOWS = {
-  card: "0 24px 60px -24px rgba(17,17,17,0.22), 0 4px 14px -6px rgba(17,17,17,0.08)",
-  float:
-    "0 60px 120px -40px rgba(17,17,17,0.30), 0 18px 48px -24px rgba(17,17,17,0.14)",
-  glass:
-    "0 30px 70px -28px rgba(17,17,17,0.20), inset 0 1px 0 rgba(255,255,255,0.95), inset 0 -26px 48px -34px rgba(241,89,34,0.38)",
+  window:
+    "0 80px 140px -50px rgba(15,15,15,0.38), 0 30px 60px -30px rgba(15,15,15,0.22), 0 0 0 1px rgba(15,15,15,0.06)",
+  device:
+    "0 70px 120px -44px rgba(15,15,15,0.42), 0 24px 48px -24px rgba(15,15,15,0.24)",
+  card: "0 22px 48px -26px rgba(15,15,15,0.24), 0 2px 6px -2px rgba(15,15,15,0.06)",
+  chip: "0 18px 40px -18px rgba(15,15,15,0.32), 0 2px 8px -2px rgba(15,15,15,0.08)",
   button:
-    "0 18px 36px -12px rgba(241,89,34,0.50), 0 6px 14px -6px rgba(241,89,34,0.32), inset 0 1px 0 rgba(255,255,255,0.35)",
+    "0 22px 44px -16px rgba(241,89,34,0.55), 0 6px 14px -6px rgba(241,89,34,0.36), inset 0 1.5px 0 rgba(255,255,255,0.38)",
 } as const;
 
 /** Standard 16:9 safe margin for 1920x1080. */
-export const SAFE = 110;
+export const SAFE = 120;

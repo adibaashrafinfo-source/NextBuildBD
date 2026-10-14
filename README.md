@@ -21,12 +21,12 @@ npm run preview   # serve the production build
 
 A separate deliverable that lives in this repo alongside the landing page: a
 1920x1080 motion-graphics promo for Abrar IT's Website Design & Development
-service, built with Remotion and cut to the narration in
-`public/voiceover.mp3` (31.8s, 954 frames @ 30fps).
+service, with Bangla on-screen text, built with Remotion and cut to the
+narration in `public/voiceover.mp3` (31.8s, 954 frames @ 30fps).
 
 ```bash
 npm run video:studio          # interactive preview with a scrubbable timeline
-npm run video:render          # out/abrar-it-promo-voiceover.mp4  (with audio)
+npm run video:render          # out/abrar-it-promo-v2.mp4  (with audio)
 npm run video:render:silent   # same film with no audio track
 ```
 

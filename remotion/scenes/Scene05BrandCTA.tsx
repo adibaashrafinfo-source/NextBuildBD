@@ -1,93 +1,67 @@
-import { AbsoluteFill, useCurrentFrame } from "remotion";
-import { COLORS, EASE } from "../theme";
+import { AbsoluteFill } from "remotion";
+import { CUES, rel } from "../timeline";
 import { PHONE } from "../brand";
-import { beat } from "../timeline";
-import { prog } from "../anim";
 import { AnimatedOrangeRibbon } from "../components/AnimatedOrangeRibbon";
 import { FinalBrandCTA } from "../components/FinalBrandCTA";
 import { WhatsAppFloatingButton } from "../components/WhatsAppFloatingButton";
-import { OrangeParticles } from "../components/OrangeParticles";
 
-const B = (name: Parameters<typeof beat<"brand">>[1]) => beat("brand", name);
+const F = (s: number) => rel("brand", s);
+const C = CUES.brand;
 
 /**
- * Scene 5 (24-30s) — brand reveal and conversion.
- * Clean white, the original logo behind a mask, the primary CTA, the tagline,
- * and the floating WhatsApp button. Holds long enough to read comfortably.
+ * Scene 5 (23.59 - 31.8s): "আপনার ব্যবসাকে অনলাইনে এগিয়ে নিতে আজই যোগাযোগ করুন
+ * 01719686459 — Abrar IT — Your Journey to Digital Excellence".
+ * Clean white, the original logo behind a mask, the call to action, the spoken
+ * number beside the WhatsApp button, and the tagline. Holds to the last frame.
  */
-export const Scene05BrandCTA: React.FC = () => {
-  const frame = useCurrentFrame();
+export const Scene05BrandCTA: React.FC = () => (
+  <AbsoluteFill>
+    <AnimatedOrangeRibbon
+      gradientId="brand-a"
+      curve={[
+        { x: -300, y: 190 },
+        { x: 420, y: -140 },
+        { x: 1340, y: 230 },
+        { x: 2240, y: -20 },
+      ]}
+      delay={F(C.logo) - 4}
+      duration={56}
+      width={13}
+      belly={0.46}
+      opacity={0.26}
+      tipGlow={false}
+    />
+    <AnimatedOrangeRibbon
+      gradientId="brand-b"
+      curve={[
+        { x: -260, y: 1020 },
+        { x: 560, y: 1250 },
+        { x: 1440, y: 900 },
+        { x: 2240, y: 1110 },
+      ]}
+      delay={F(C.logo) + 6}
+      duration={58}
+      width={11}
+      belly={0.5}
+      opacity={0.22}
+      tipGlow={false}
+    />
 
-  // A clean white wipe hands off from scene 4.
-  const wipe = 1 - prog(frame, B("whiteWipe"), 16, EASE.out);
+    <FinalBrandCTA
+      logoDelay={F(C.logo)}
+      logoAccentDelay={F(C.logoAccent)}
+      lead={C.lead.map(F)}
+      headline={C.headline.map(F)}
+      ctaDelay={F(C.cta)}
+      taglineDelay={F(C.tagline)}
+    />
 
-  return (
-    <AbsoluteFill>
-      {/* Pure white ground — nothing competes with the lock-up. */}
-      <AbsoluteFill style={{ background: COLORS.white }} />
-      <AbsoluteFill
-        style={{
-          background:
-            "radial-gradient(54% 62% at 50% 44%, rgba(245,245,243,0.9) 0%, rgba(255,255,255,0) 70%)",
-        }}
-      />
-
-      {/* Two quiet swashes echoing the logo, kept well clear of the type. */}
-      <AnimatedOrangeRibbon
-        gradientId="brand-ribbon-a"
-        curve={[
-          { x: -300, y: 120 },
-          { x: 440, y: -110 },
-          { x: 1340, y: 160 },
-          { x: 2220, y: -30 },
-        ]}
-        delay={B("logoIn") - 6}
-        duration={54}
-        width={12}
-        belly={0.44}
-        opacity={0.19}
-        tipGlow={false}
-        drift={9}
-      />
-      <AnimatedOrangeRibbon
-        gradientId="brand-ribbon-b"
-        curve={[
-          { x: -260, y: 1030 },
-          { x: 560, y: 1240 },
-          { x: 1440, y: 905 },
-          { x: 2220, y: 1105 },
-        ]}
-        delay={B("logoIn") + 4}
-        duration={58}
-        width={10}
-        belly={0.5}
-        opacity={0.15}
-        tipGlow={false}
-        drift={11}
-      />
-
-      <OrangeParticles count={20} seed="brand" intensity={0.8} speed={0.7} />
-
-      <FinalBrandCTA
-        logoDelay={B("logoIn")}
-        headlineDelay={B("headline")}
-        ctaDelay={B("ctaButton")}
-        ctaLabelDelay={B("ctaLabel")}
-        logoAccentDelay={B("logoAccent")}
-        taglineDelay={B("tagline")}
-      />
-
-      <WhatsAppFloatingButton
-        delay={B("whatsapp")}
-        labelDelay={B("phoneLabel")}
-        label={PHONE}
-        size={108}
-        inset={{ right: 104, bottom: 92 }}
-      />
-
-      {wipe > 0.001 ? (
-        <AbsoluteFill style={{ background: COLORS.white, opacity: wipe, pointerEvents: "none" }} />
-      ) : null}
-    </AbsoluteFill>
-  );
-};
+    <WhatsAppFloatingButton
+      delay={F(C.whatsapp)}
+      labelDelay={F(C.phoneLabel)}
+      label={PHONE}
+      size={108}
+      inset={{ right: 104, bottom: 92 }}
+    />
+  </AbsoluteFill>
+);

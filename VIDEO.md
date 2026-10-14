@@ -1,4 +1,4 @@
-# Abrar IT — 30-Second Website Design & Development Promo
+# Abrar IT — Website Design & Development Promo (v2, বাংলা)
 
 A bespoke, frame-accurate motion-graphics film built with **Remotion**. It lives
 alongside the existing Vite landing page and shares nothing with it except the
@@ -12,10 +12,10 @@ alongside the existing Vite landing page and shares nothing with it except the
 | Duration | **954 frames = 31.8 s** — the length of the voice-over |
 | Codec | H.264 MP4, yuv420p, CRF 16 |
 | Audio | AAC, muxed from `public/voiceover.mp3` |
-| Output | `out/abrar-it-promo-voiceover.mp4` |
+| On-screen language | **Bangla** (Anek Bangla + Noto Sans Bengali) |
+| Output | `out/abrar-it-promo-v2.mp4` |
 
-A silent master is still one flag away: `npm run video:render:silent` renders the
-same composition with `--muted`, producing a video with no audio track.
+A silent master is still one flag away: `npm run video:render:silent`.
 
 ---
 
@@ -25,7 +25,7 @@ same composition with `--muted`, producing a video with no audio track.
 npm install            # once
 
 npm run video:studio          # interactive preview — timeline, scrubber, waveform
-npm run video:render          # out/abrar-it-promo-voiceover.mp4  (with audio)
+npm run video:render          # out/abrar-it-promo-v2.mp4  (with audio)
 npm run video:render:silent   # out/abrar-it-promo-silent.mp4     (no audio track)
 npm run video:still    # single frame to out/frame.png (add --frame=123)
 npm run video:typecheck
@@ -35,7 +35,7 @@ On a headless Linux box without a GPU, point Remotion at a Chrome you already
 have instead of letting it download one:
 
 ```bash
-npx remotion render AbrarITPromo out/abrar-it-promo-voiceover.mp4 \
+npx remotion render AbrarITPromo out/abrar-it-promo-v2.mp4 \
   --browser-executable=/opt/pw-browsers/chromium_headless_shell-1194/chrome-linux/headless_shell
 ```
 
@@ -44,24 +44,52 @@ software renderer (needed for the blur / backdrop-filter work).
 
 ---
 
-## 2. Brand
+## 2. Brand and design language
 
 | Token | Value | Notes |
 |---|---|---|
 | White | `#FFFFFF` | |
+| Mist | `#F3F2EE` / `#E9E7E1` | warm gray ground |
 | **Brand orange** | `#F15922` | **sampled from the logo PNG itself**, not approximated |
-| Orange deep | `#D2460F` | shadow side of gradients |
-| Orange soft | `#FF8A5C` | highlight side |
-| Black | `#111111` | |
-| Warm gray | `#F5F5F3` / `#E9E8E3` | |
+| Ember / Soft / Peach | `#C93E0F` / `#FF8A5C` / `#FFEDE5` | gradient shadow, highlight, tint |
+| Ink | `#0F0F0F` | |
 | WhatsApp green | `#25D366` | used *only* on the WhatsApp button |
 
-Typography: **Manrope** (display) and **Inter** (body), self-hosted as variable
-woff2 in `public/fonts/`. Nothing is fetched from the network at render time.
+**Type.** Anek Bangla (display — carries Bangla and Latin), Noto Sans Bengali
+(the interface type inside the website mockups), Manrope (URL and wordmarks).
+All three are self-hosted variable woff2 in `public/fonts/`, so nothing is
+fetched at render time. Bangla gets **no letter-spacing** — it breaks the joined
+letterforms — and text is split into words only on spaces, never inside a word,
+so conjuncts (প্র, ব্য, স্ট, র্স…) always shape correctly.
 
-The logo at `public/abrar-it-logo.png` is drawn as-is through `<Img>` with its
-aspect ratio locked (1249 × 351). It is never recoloured, filtered or redrawn —
-the masked entrance animates a mask *over* the untouched image.
+**The logo** at `public/abrar-it-logo.png` is drawn as-is through `<Img>` with
+its aspect ratio locked (1249 × 351). It is never recoloured, filtered or
+redrawn; the masked entrance animates a mask *over* the untouched image.
+
+**What changed in v2.** The first version showed grey skeleton bars where
+content should be, which read as wireframes. v2 shows real, finished websites:
+
+* **Realistic mockups.** A property-developer site (`site/CorporateSite.tsx`),
+  a lifestyle store (`site/ShopSite.tsx`) and a business dashboard
+  (`site/DashboardApp.tsx`), with real Bangla copy, SVG illustrations
+  (`art/Building.tsx`, `art/Products.tsx`) and `lucide-react` icons.
+* **Genuinely responsive.** `CorporateSite` takes a `width` and reflows for
+  desktop / tablet / phone, so dragging the browser window narrower in scene 3
+  re-lays the page out live, exactly as a real site would.
+* **Real behaviour.** Sticky header that gains a shadow on scroll, scroll-driven
+  section reveals (`site/scroll.tsx`), hover states, a loading bar, add-to-cart
+  with a toast and a badge that increments, counters that count up, a chart that
+  draws itself.
+* **Realistic devices.** Browser window with tabs and an address bar, laptop,
+  tablet and phone with bezels, camera, dynamic island, status bar and glare.
+* **Cinematic camera and cuts.** Slow pushes, a camera that moves window to
+  window in scene 4, and an orange swash (`components/SceneWipe.tsx`) that joins
+  the scenes.
+
+**Mock content.** The three demo sites are fictional (Urban Nest, Lumi, Biz Hub).
+The dashboard shows illustrative sample figures and the shop shows sample
+prices; none of it is a claim about Abrar IT, and it can be removed by editing
+`site/DashboardApp.tsx` and `art/Products.tsx`.
 
 ---
 
@@ -70,16 +98,16 @@ the masked entrance animates a mask *over* the untouched image.
 Every timing lives in **`remotion/timeline.ts`**. Nothing else hard-codes a frame
 number.
 
-| Scene | Seconds | Frames | Content |
-|---|---|---|---|
-| 1 · Hook | 0 – 3.30 | 0 – 99 | Orange swash sweeps in → browser materialises → `YOUR BUSINESS DESERVES / A PROFESSIONAL WEBSITE` + cursor click |
-| 2 · Opportunity | 3.30 – 8.67 | 99 – 260 | Camera lands on the business site → `BUILD TRUST. / CREATE OPPORTUNITIES.` + glass panels → orange light sweep |
-| 3 · Showcase | 8.67 – 17.44 | 260 – 523 | Corporate site scrolls with live UI interactions → splits into desktop / tablet / phone → `MODERN UI/UX`, `RESPONSIVE DESIGN`, `FAST PERFORMANCE` |
-| 4 · Solutions | 17.44 – 23.59 | 523 – 708 | Three glass panels → `BUSINESS WEBSITES`, `E-COMMERCE STORES`, `CUSTOM WEB SOLUTIONS` |
-| 5 · Brand & CTA | 23.59 – 31.80 | 708 – 954 | Logo mask reveal → `LET'S BUILD YOUR WEBSITE` → orange CTA with `www.abrarit.com` → tagline → WhatsApp button → hold |
+| Scene | Seconds | Frames | Narration | On screen |
+|---|---|---|---|---|
+| 1 · প্রশ্ন | 0 – 3.30 | 0 – 99 | "আপনার ব্যবসার কি এখনো কোনো প্রফেশনাল ওয়েবসাইট নেই?" | The question lands word by word; a browser opens on an honest 404 and a click does nothing |
+| 2 · ক্ষতি | 3.30 – 8.67 | 99 – 260 | "…প্রতিদিন হারাচ্ছেন সম্ভাব্য কাস্টমারের বিশ্বাস ও নতুন ব্যবসার সুযোগ!" | A customer asks for the website in a chat, gets no answer, and leaves |
+| 3 · সমাধান | 8.67 – 17.44 | 260 – 523 | "Abrar IT দিচ্ছে আধুনিক, দ্রুতগতির ও মোবাইল-ফ্রেন্ডলি ওয়েবসাইট…" | A site loads, scrolls and reacts; the window is dragged narrow and reflows into a phone; desktop, tablet and phone stand together |
+| 4 · সলিউশন | 17.44 – 23.59 | 523 – 708 | "বিজনেস ওয়েবসাইট হোক কিংবা ই-কমার্স স্টোর— …ওয়েব সলিউশন।" | Three live sites; the camera visits each, adds to a cart, counts up a dashboard, then pulls back |
+| 5 · যোগাযোগ | 23.59 – 31.80 | 708 – 954 | "…আজই যোগাযোগ করুন · 01719686459 · Abrar IT · Your Journey…" | Logo, CTA, spoken number beside the WhatsApp button, tagline; holds to the end |
 
-Every boundary sits at the midpoint of a measured pause between spoken
-sentences, so no cut lands inside a sentence.
+Every cut sits in a measured pause of the narration (~0.5 s) and the orange
+swash plays inside that pause, so no cut lands mid-sentence.
 
 ### Re-cutting scenes
 
@@ -101,26 +129,31 @@ in/out animation, so boundaries can move freely as long as they stay ordered.
 
 ### Re-timing elements inside a scene
 
-`BEATS` holds every element's cue **in seconds relative to its own scene start**:
+`CUES` in `remotion/timeline.ts` holds every on-screen event in **absolute
+seconds** — the same clock as the audio file — each annotated with the spoken
+word it is pinned to:
 
 ```ts
-BEATS.brand = {
-  whiteWipe:  0.0,   // = 23.59s absolute
-  logoIn:     0.31,  // = 23.90s  ← measured phrase onset
-  headline:   1.3,   // = 24.89s
-  whatsapp:   2.6,   // = 26.19s
-  ctaButton:  3.4,   // = 26.99s
-  ctaLabel:   3.99,  // = 27.58s  ← measured phrase onset
-  logoAccent: 6.01,  // = 29.60s  ← measured phrase onset
-  tagline:    6.83,  // = 30.42s  ← measured phrase onset
-  hold:       7.4,   // = 30.99s
+CUES.showcase = {
+  logo:     8.92,   // "Abrar IT"
+  modern:   10.38,  // "আধুনিক"
+  fast:     11.12,  // "দ্রুতগতির"
+  mobile:   12.1,   // "মোবাইল-ফ্রেন্ডলি"  → the window starts being dragged narrow
+  ...
 };
 ```
 
-To land the logo on a specific word of your narration: take the word's absolute
-timestamp, subtract the scene's `start`, put the result in the beat. Everything
-driven by that beat (the mask wipe, the settle spring, the orange edge) moves
-together.
+Scenes convert these with `rel(scene, seconds)`, so changing one number moves
+the reveal and everything attached to it. Word-by-word headlines take an array
+of start times, one per word:
+
+```ts
+line1: [4.06, 4.56],   // প্রতিদিন · হারাচ্ছেন
+```
+
+To land something on a specific word of your narration, put that word's
+timestamp in the matching cue. Everything driven by it (the mask wipe, the
+settle spring, the orange edge) moves together.
 
 ---
 
@@ -154,15 +187,17 @@ the signature of a spoken three-item list.
 
 Measured: every phrase boundary, every pause, the track length.
 
-Inferred: **which words are in which phrase.** The audio was not transcribed —
-`huggingface.co` is blocked in this environment, so no speech-to-text model
-could be downloaded. The mapping of storyboard copy onto phrases comes from the
-storyboard structure matching the measured phrase structure, which it does
-closely, but it has not been verified against the script.
+Mapped from the supplied script: which words fall in which phrase. The script
+is recorded per phrase in `audioMarkers.ts`, and phrase length corroborates it —
+phrase 5 is 0.60 s for the single word "আধুনিক", phrase 6 is 0.80 s for
+"দ্রুতগতির", phrase 13 is 1.68 s (the time it takes to read a phone number
+aloud) and phrase 14 is 0.68 s for "Abrar IT".
 
-To make it exact, open the script used to generate the voice-over, find the
-timestamp of the word a reveal should land on, subtract that scene's `start`,
-and put the result in the corresponding `BEATS` entry.
+Estimated: the time of each *individual word inside* a long phrase (for
+example where "প্রফেশনাল" starts within phrase 1). These come from syllable
+counts, accurate to roughly a tenth of a second. The audio was not transcribed
+with word timestamps — `huggingface.co` is blocked in the build environment —
+so if a word looks early or late, nudge its number in `CUES`.
 
 ### Swapping in a different voice-over
 
@@ -195,40 +230,35 @@ remotion.config.ts            render settings (codec, CRF, GL renderer)
 tsconfig.remotion.json        type-checking for the video only
 
 remotion/
-  index.ts                    registerRoot
-  Root.tsx                    <Composition> — 1920x1080, 30fps, 900 frames
-  AbrarITPromo.tsx            scene assembly
-  timeline.ts                 ◀ ALL TIMINGS LIVE HERE
-  theme.ts                    colours, fonts, easings, springs, shadows
-  brand.ts                    brand copy, logo path, WHATSAPP_URL
-  fonts.ts                    local woff2 loader (delayRender-safe)
-  audioMarkers.ts             measured speech phrases from the voice-over
-  anim.ts                     prog / springAt / osc helpers
-  ribbonGeometry.ts           tapered calligraphic ribbon maths
+  index.ts  Root.tsx          registerRoot, <Composition> 1920x1080 @30fps
+  AbrarITPromo.tsx            scenes + <Audio> + the swash transitions
+  timeline.ts                 ◀ SCENES and CUES: ALL TIMINGS LIVE HERE
+  audioMarkers.ts             measured speech phrases + the script per phrase
+  theme.ts  brand.ts          colours/fonts/easings; Bangla copy, phone, URL
+  fonts.ts                    local woff2 loader (Anek Bangla, Noto Sans Bengali…)
+  anim.ts  ribbonGeometry.ts  prog / kf / springAt helpers; ribbon maths
 
+  scenes/                     Scene01Hook … Scene05BrandCTA
   components/
+    AnimatedHeadline.tsx      Bangla word-by-word masked reveal
+    WebsiteBrowserMockup.tsx  browser chrome + page viewport
+    ResponsiveDeviceShowcase  desktop + tablet + phone, one site, three widths
+    WebsiteSolutionPanel.tsx  a window under the scene-4 camera
+    LiquidGlassCard.tsx       frosted surface + GlassLabel
     LogoReveal.tsx            masked entrance over the untouched PNG
     AnimatedOrangeRibbon.tsx  logo-inspired swash that draws itself on
-    WebsiteBrowserMockup.tsx  browser chrome + scrollable page viewport
-    ResponsiveDeviceShowcase.tsx  TabletFrame / PhoneFrame / DeviceSlot
-    LiquidGlassCard.tsx       backdrop-blur glass + sheen (and GlassLabel)
-    AnimatedHeadline.tsx      word-by-word mask reveal (and MaskedLine)
-    WebsiteSolutionPanel.tsx  glass panel holding a mini site + caption
-    WhatsAppFloatingButton.tsx
-    FinalBrandCTA.tsx         logo + headline + CTA + tagline lock-up
-    BackgroundCanvas.tsx      white / warm-gray ground, vignette, grain
-    OrangeParticles.tsx       seeded ambient motes
-    LightSweep.tsx            scene-to-scene light bar
-    Cursor.tsx                pointer travel + click ripple
-
-  mockups/                    the websites shown on screen, pure CSS/SVG
-    CorporateSite.tsx  EcommerceSite.tsx  DashboardApp.tsx
-    ResponsiveSite.tsx (TabletSite / MobileSite)  ui.tsx
+    SceneWipe.tsx             the orange swash between scenes
+    Cursor.tsx                pointer path, press and click ripple
+    FinalBrandCTA.tsx  WhatsAppFloatingButton.tsx  BackgroundCanvas.tsx
+  devices/Frames.tsx          Laptop, Tablet, Phone
+  site/                       CorporateSite, ShopSite, DashboardApp, ScenePages,
+                              scroll.tsx (scroll + reveal engine), ui.tsx, format.ts
+  art/                        Building.tsx, Products.tsx (SVG illustrations)
 
 public/
   abrar-it-logo.png           the supplied original logo
   voiceover.mp3               the narration the cut is synced to
-  fonts/Inter-Variable.woff2  fonts/Manrope-Variable.woff2
+  fonts/                      AnekBangla-*, NotoSansBengali-*, Manrope, Inter
 ```
 
 ---
@@ -250,8 +280,12 @@ bottom-right, clear of the logo, CTA and URL, with a float and a pulse ring.
 
 ## 7. On-screen copy
 
-Only the storyboard wording appears, plus interface labels inside the website
-mockups (`Home`, `Our Services`, `Get Started`, `Featured Products`,
-`Overview`…). Body copy inside the mockups is rendered as skeleton bars and the
-dashboard uses charts with no figures — so the film makes no claims, quotes no
-testimonials and shows no ratings or statistics.
+All on-screen text is Bangla and follows the narration phrase by phrase (see
+`COPY` in `remotion/brand.ts`). Two things stay in English on purpose: the
+tagline "Your Journey to Digital Excellence" (it is part of the logo lock-up and
+is spoken in English) and the URL `www.abrarit.com`.
+
+The film makes no claims about Abrar IT: no testimonials, ratings, statistics or
+invented offers. The three demo websites are fictional and use realistic Bangla
+copy; the dashboard and shop show sample figures and prices that belong to those
+fictional products, not to Abrar IT.

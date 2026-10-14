@@ -10,7 +10,7 @@
     "preview": "vite preview",
     "db:bundle": "node scripts/bundle-sql.mjs",
     "video:studio": "remotion studio",
-    "video:render": "remotion render AbrarITPromo out/abrar-it-promo-voiceover.mp4",
+    "video:render": "remotion render AbrarITPromo out/abrar-it-promo-v2.mp4",
     "video:still": "remotion still AbrarITPromo out/frame.png",
     "video:typecheck": "tsc -p tsconfig.remotion.json",
     "video:render:silent": "remotion render AbrarITPromo out/abrar-it-promo-silent.mp4 --muted"

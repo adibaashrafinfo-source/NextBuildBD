@@ -56,3 +56,18 @@ export const osc = (frame: number, periodFrames: number, phase = 0) =>
 
 /** Linear easing re-export so scenes don't import Easing directly. */
 export const LINEAR: EasingFn = Easing.linear;
+
+/** Multi-stop keyframes with one easing applied to every segment. Clamped at both ends. */
+export const kf = (
+  frame: number,
+  stops: ReadonlyArray<readonly [number, number]>,
+  easing: EasingFn = EASE.inOut,
+) =>
+  interpolate(
+    frame,
+    stops.map((s) => s[0]),
+    stops.map((s) => s[1]),
+    { extrapolateLeft: "clamp", extrapolateRight: "clamp", easing },
+  );
+
+export const clamp01 = (v: number) => Math.max(0, Math.min(1, v));

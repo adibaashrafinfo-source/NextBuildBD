@@ -1,128 +1,116 @@
-import type { CSSProperties, ReactNode } from "react";
-import { COLORS, SHADOWS } from "../theme";
+import { useCurrentFrame, useVideoConfig } from "remotion";
+import { EASE, SPRINGS } from "../theme";
+import { kf, springAt } from "../anim";
+import { Laptop, Phone, Tablet } from "../devices/Frames";
+import { CorporateSite } from "../site/CorporateSite";
 
-/** A tablet shell: rounded aluminium frame, thin bezel, no browser chrome. */
-export const TabletFrame: React.FC<{
-  width: number;
-  height: number;
-  children: ReactNode;
-  style?: CSSProperties;
-}> = ({ width, height, children, style }) => {
-  const bezel = Math.round(width * 0.028);
-  return (
-    <div
-      style={{
-        width,
-        height,
-        borderRadius: width * 0.055,
-        padding: bezel,
-        background: "linear-gradient(150deg, #FFFFFF 0%, #ECEBE6 48%, #FDFDFC 100%)",
-        boxShadow: `${SHADOWS.float}, inset 0 0 0 1px rgba(17,17,17,0.08)`,
-        ...style,
-      }}
-    >
-      <div
-        style={{
-          width: "100%",
-          height: "100%",
-          borderRadius: width * 0.038,
-          overflow: "hidden",
-          background: COLORS.white,
-          boxShadow: "inset 0 0 0 1px rgba(17,17,17,0.07)",
-          position: "relative",
-        }}
-      >
-        {children}
-      </div>
-    </div>
-  );
+export const SHOWCASE_BOTTOM = 800;
+export const PHONE_SCREEN_W = 320;
+export const PHONE_OUTER = { w: 344.4, h: 716.9 } as const;
+
+const LAPTOP = { cx: 545, screen: 760, w: 838.5 };
+const TABLET = { cx: 1190, screen: 360, w: 384.4 };
+
+export type ResponsiveDeviceShowcaseProps = {
+  /** Frame (in the surrounding Sequence) the laptop and tablet start arriving. */
+  enterAt: number;
+  /** Phone centre, which slides out of the narrowing browser window. */
+  phoneCx: number;
+  phoneCy: number;
+  phoneOpacity: number;
+  /** Glare sweep and slow scroll windows, in frames. */
+  glareFrom: number;
+  glareTo: number;
+  scrollFrom: number;
+  scrollTo: number;
 };
 
-/** A smartphone shell with notch and side button. */
-export const PhoneFrame: React.FC<{
-  width: number;
-  height: number;
-  children: ReactNode;
-  style?: CSSProperties;
-}> = ({ width, height, children, style }) => {
-  const bezel = Math.round(width * 0.042);
-  return (
-    <div
-      style={{
-        width,
-        height,
-        borderRadius: width * 0.155,
-        padding: bezel,
-        background: "linear-gradient(152deg, #FFFFFF 0%, #E9E8E3 46%, #FDFDFC 100%)",
-        boxShadow: `${SHADOWS.float}, inset 0 0 0 1px rgba(17,17,17,0.10)`,
-        position: "relative",
-        ...style,
-      }}
-    >
-      <div
-        style={{
-          position: "absolute",
-          right: -2,
-          top: "26%",
-          width: 3,
-          height: height * 0.09,
-          borderRadius: 999,
-          background: "#DBDAD4",
-        }}
-      />
-      <div
-        style={{
-          width: "100%",
-          height: "100%",
-          borderRadius: width * 0.115,
-          overflow: "hidden",
-          background: COLORS.white,
-          boxShadow: "inset 0 0 0 1px rgba(17,17,17,0.07)",
-          position: "relative",
-        }}
-      >
-        {children}
-        <div
-          style={{
-            position: "absolute",
-            top: 0,
-            left: "50%",
-            transform: "translateX(-50%)",
-            width: width * 0.38,
-            height: width * 0.085,
-            borderRadius: `0 0 ${width * 0.06}px ${width * 0.06}px`,
-            background: COLORS.ink,
-            zIndex: 2,
-          }}
-        />
-      </div>
-    </div>
-  );
-};
-
-/** Layout helper: positions a device in the 3D showcase with parallax depth. */
-export const DeviceSlot: React.FC<{
-  children: ReactNode;
-  x: number;
-  y: number;
-  z?: number;
-  rotateY?: number;
-  rotateX?: number;
-  scale?: number;
-  opacity?: number;
-  style?: CSSProperties;
-}> = ({ children, x, y, z = 0, rotateY = 0, rotateX = 0, scale = 1, opacity = 1, style }) => (
+/** A soft contact shadow so each device sits on a surface instead of floating on white. */
+const Ground: React.FC<{ cx: number; w: number; opacity: number }> = ({ cx, w, opacity }) => (
   <div
     style={{
       position: "absolute",
-      left: x,
-      top: y,
-      transform: `translate3d(-50%, -50%, ${z}px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(${scale})`,
-      transformStyle: "preserve-3d",
+      left: cx - w * 0.55,
+      top: SHOWCASE_BOTTOM - 20,
+      width: w * 1.1,
+      height: 64,
+      background: "radial-gradient(50% 50% at 50% 50%, rgba(15,15,15,0.30) 0%, rgba(15,15,15,0) 72%)",
       opacity,
-      ...style,
     }}
-  >
-    {children}
-  </div>
+  />
 );
+
+/**
+ * Desktop, tablet and phone showing the *same* site, each reflowed natively to
+ * its own width — the payoff of the "মোবাইল-ফ্রেন্ডলি" line.
+ */
+export const ResponsiveDeviceShowcase: React.FC<ResponsiveDeviceShowcaseProps> = ({
+  enterAt,
+  phoneCx,
+  phoneCy,
+  phoneOpacity,
+  glareFrom,
+  glareTo,
+  scrollFrom,
+  scrollTo,
+}) => {
+  const frame = useCurrentFrame();
+  const { fps } = useVideoConfig();
+
+  const laptopIn = springAt({ frame, fps, delay: enterAt, config: SPRINGS.soft });
+  const tabletIn = springAt({ frame, fps, delay: enterAt + 7, config: SPRINGS.soft });
+  const glare = kf(frame, [[glareFrom, -45], [glareTo, 150]], EASE.inOut);
+  const sc = kf(frame, [[scrollFrom, 0], [scrollTo, 1]], EASE.inOut);
+
+  return (
+    <>
+      <Ground cx={LAPTOP.cx} w={LAPTOP.w} opacity={laptopIn} />
+      <Ground cx={TABLET.cx} w={TABLET.w} opacity={tabletIn} />
+      <Ground cx={1622} w={PHONE_OUTER.w} opacity={phoneOpacity * Math.min(1, Math.max(0, (phoneCx - 1000) / 400))} />
+
+      {/* desktop */}
+      <div
+        style={{
+          position: "absolute",
+          left: LAPTOP.cx,
+          bottom: 1080 - SHOWCASE_BOTTOM,
+          transform: `translateX(-50%) translateX(${(1 - laptopIn) * -420}px) perspective(2600px) rotateY(${(1 - laptopIn) * 22}deg)`,
+          opacity: Math.min(1, laptopIn * 2),
+        }}
+      >
+        <Laptop screenWidth={LAPTOP.screen} glare={glare}>
+          {(w, h) => <CorporateSite width={w} height={h} scroll={sc * 560} />}
+        </Laptop>
+      </div>
+
+      {/* tablet */}
+      <div
+        style={{
+          position: "absolute",
+          left: TABLET.cx,
+          bottom: 1080 - SHOWCASE_BOTTOM,
+          transform: `translateX(-50%) translateY(${(1 - tabletIn) * 320}px)`,
+          opacity: Math.min(1, tabletIn * 2),
+        }}
+      >
+        <Tablet screenWidth={TABLET.screen} glare={glare}>
+          {(w, h) => <CorporateSite width={w} height={h} scroll={sc * 420} />}
+        </Tablet>
+      </div>
+
+      {/* phone: emerges from the narrowing browser window */}
+      <div
+        style={{
+          position: "absolute",
+          left: phoneCx - PHONE_OUTER.w / 2,
+          top: phoneCy - PHONE_OUTER.h / 2,
+          opacity: phoneOpacity,
+        }}
+      >
+        <Phone screenWidth={PHONE_SCREEN_W} glare={glare}>
+          {(w, h) => <CorporateSite width={w} height={h} scroll={sc * 380} />}
+        </Phone>
+      </div>
+    </>
+  );
+};
