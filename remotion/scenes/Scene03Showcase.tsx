@@ -43,29 +43,31 @@ export const Scene03Showcase: React.FC = () => {
   const outro = prog(frame, B("outro"), total - B("outro"), EASE.inOut);
 
   // Eased, paused scroll through the page — never a constant crawl.
+  // Scroll stops are derived from the beats rather than hard-coded offsets, so
+  // moving a beat can never put them out of order.
+  const scrollFrom = B("scrollStart");
+  const scrollTo = B("scrollEnd");
   const scroll = interpolate(
     frame,
     [
-      B("scrollStart"),
-      B("scrollStart") + 24,
-      B("scrollStart") + 32,
-      B("scrollStart") + 54,
-      B("scrollEnd"),
-      B("devicesSplit") + 8,
-      B("devicesSplit") + 44,
+      scrollFrom,
+      scrollFrom + (scrollTo - scrollFrom) * 0.45,
+      scrollTo,
+      B("devicesSplit") + 6,
+      B("devicesSplit") + 40,
     ],
-    // Scrolls down through the page, then eases back to the hero so all three
+    // Travels down through the page, then eases back to the hero so all three
     // devices come to rest on the same section of the same site.
-    [0, 600, 640, 1150, 1240, 1240, 250],
+    [0, 540, 900, 900, 250],
     { extrapolateLeft: "clamp", extrapolateRight: "clamp", easing: EASE.inOut },
   );
 
   // Micro-interactions inside the page.
-  const navHover = prog(frame, B("navDraw"), 26, EASE.out);
+  const navHover = prog(frame, B("navDraw"), 22, EASE.out);
   const ctaHover =
     prog(frame, B("hoverCta"), 12, EASE.out) - prog(frame, B("hoverCta") + 26, 14, EASE.out);
   const cardHover =
-    prog(frame, B("cardsIn") + 26, 16, EASE.out) - prog(frame, B("scrollStart") + 20, 14, EASE.out);
+    prog(frame, B("cardsIn") + 8, 14, EASE.out) - prog(frame, B("scrollStart") + 10, 12, EASE.out);
 
   // Desktop window morphs from hero size into its slot in the device trio.
   const w = interpolate(split, [0, 1], [BIG.w, DESKTOP.w]);
@@ -207,7 +209,7 @@ export const Scene03Showcase: React.FC = () => {
       })}
 
       <LightSweep delay={B("devicesSplit") - 4} duration={26} intensity={0.75} />
-      <LightSweep delay={B("outro") + 4} duration={22} intensity={0.8} />
+      <LightSweep delay={B("outro")} duration={total - B("outro")} intensity={0.8} />
     </AbsoluteFill>
   );
 };

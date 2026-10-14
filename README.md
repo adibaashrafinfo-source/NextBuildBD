@@ -20,18 +20,20 @@ npm run preview   # serve the production build
 ## Promo video (Abrar IT)
 
 A separate deliverable that lives in this repo alongside the landing page: a
-30-second, 1920x1080, **silent** motion-graphics promo for Abrar IT's Website
-Design & Development service, built with Remotion.
+1920x1080 motion-graphics promo for Abrar IT's Website Design & Development
+service, built with Remotion and cut to the narration in
+`public/voiceover.mp3` (31.8s, 954 frames @ 30fps).
 
 ```bash
-npm run video:studio   # interactive preview with a scrubbable timeline
-npm run video:render   # out/abrar-it-promo-30s.mp4  (900 frames @ 30fps)
+npm run video:studio          # interactive preview with a scrubbable timeline
+npm run video:render          # out/abrar-it-promo-voiceover.mp4  (with audio)
+npm run video:render:silent   # same film with no audio track
 ```
 
-Source is in `remotion/`; every timing lives in `remotion/timeline.ts`. Full
-documentation, including how to attach your own voice-over afterwards, is in
-**[VIDEO.md](VIDEO.md)**. It shares nothing with the site build but the
-`public/` folder.
+Source is in `remotion/`; every timing lives in `remotion/timeline.ts`, and the
+speech-phrase measurements the cut is built on are in
+`remotion/audioMarkers.ts`. Full documentation is in **[VIDEO.md](VIDEO.md)**.
+It shares nothing with the site build but the `public/` folder.
 
 ## Where things live
 

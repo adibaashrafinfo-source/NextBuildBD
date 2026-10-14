@@ -9,10 +9,13 @@ alongside the existing Vite landing page and shares nothing with it except the
 | Composition id | `AbrarITPromo` |
 | Resolution | 1920 × 1080 (16:9) |
 | Frame rate | 30 fps |
-| Duration | **exactly 900 frames = 30.000 s** |
+| Duration | **954 frames = 31.8 s** — the length of the voice-over |
 | Codec | H.264 MP4, yuv420p, CRF 16 |
-| Audio | **none** — the render has no audio track at all |
-| Output | `out/abrar-it-promo-30s.mp4` |
+| Audio | AAC, muxed from `public/voiceover.mp3` |
+| Output | `out/abrar-it-promo-voiceover.mp4` |
+
+A silent master is still one flag away: `npm run video:render:silent` renders the
+same composition with `--muted`, producing a video with no audio track.
 
 ---
 
@@ -21,8 +24,9 @@ alongside the existing Vite landing page and shares nothing with it except the
 ```bash
 npm install            # once
 
-npm run video:studio   # interactive preview — timeline, scrubber, live edits
-npm run video:render   # renders out/abrar-it-promo-30s.mp4
+npm run video:studio          # interactive preview — timeline, scrubber, waveform
+npm run video:render          # out/abrar-it-promo-voiceover.mp4  (with audio)
+npm run video:render:silent   # out/abrar-it-promo-silent.mp4     (no audio track)
 npm run video:still    # single frame to out/frame.png (add --frame=123)
 npm run video:typecheck
 ```
@@ -31,7 +35,7 @@ On a headless Linux box without a GPU, point Remotion at a Chrome you already
 have instead of letting it download one:
 
 ```bash
-npx remotion render AbrarITPromo out/abrar-it-promo-30s.mp4 \
+npx remotion render AbrarITPromo out/abrar-it-promo-voiceover.mp4 \
   --browser-executable=/opt/pw-browsers/chromium_headless_shell-1194/chrome-linux/headless_shell
 ```
 
@@ -68,22 +72,25 @@ number.
 
 | Scene | Seconds | Frames | Content |
 |---|---|---|---|
-| 1 · Hook | 0 – 5 | 0 – 150 | Orange swash sweeps in → browser materialises → `YOUR BUSINESS DESERVES / A PROFESSIONAL WEBSITE` + cursor click |
-| 2 · Opportunity | 5 – 9 | 150 – 270 | Camera lands on the business site → `BUILD TRUST. / CREATE OPPORTUNITIES.` + glass panels → orange light sweep |
-| 3 · Showcase | 9 – 17 | 270 – 510 | Corporate site scrolls with live UI interactions → splits into desktop / tablet / phone → `MODERN UI/UX`, `RESPONSIVE DESIGN`, `FAST PERFORMANCE` |
-| 4 · Solutions | 17 – 24 | 510 – 720 | Three glass panels → `BUSINESS WEBSITES`, `E-COMMERCE STORES`, `CUSTOM WEB SOLUTIONS` |
-| 5 · Brand & CTA | 24 – 30 | 720 – 900 | Logo mask reveal → `LET'S BUILD YOUR WEBSITE` → orange CTA with `www.abrarit.com` → tagline → WhatsApp button → hold |
+| 1 · Hook | 0 – 3.30 | 0 – 99 | Orange swash sweeps in → browser materialises → `YOUR BUSINESS DESERVES / A PROFESSIONAL WEBSITE` + cursor click |
+| 2 · Opportunity | 3.30 – 8.67 | 99 – 260 | Camera lands on the business site → `BUILD TRUST. / CREATE OPPORTUNITIES.` + glass panels → orange light sweep |
+| 3 · Showcase | 8.67 – 17.44 | 260 – 523 | Corporate site scrolls with live UI interactions → splits into desktop / tablet / phone → `MODERN UI/UX`, `RESPONSIVE DESIGN`, `FAST PERFORMANCE` |
+| 4 · Solutions | 17.44 – 23.59 | 523 – 708 | Three glass panels → `BUSINESS WEBSITES`, `E-COMMERCE STORES`, `CUSTOM WEB SOLUTIONS` |
+| 5 · Brand & CTA | 23.59 – 31.80 | 708 – 954 | Logo mask reveal → `LET'S BUILD YOUR WEBSITE` → orange CTA with `www.abrarit.com` → tagline → WhatsApp button → hold |
+
+Every boundary sits at the midpoint of a measured pause between spoken
+sentences, so no cut lands inside a sentence.
 
 ### Re-cutting scenes
 
 ```ts
 // remotion/timeline.ts
 export const SCENES = {
-  hook:        { start: 0,  end: 5 },
-  opportunity: { start: 5,  end: 9 },
-  showcase:    { start: 9,  end: 17 },
-  solutions:   { start: 17, end: 24 },
-  brand:       { start: 24, end: 30 },
+  hook:        { start: 0,     end: 3.3 },
+  opportunity: { start: 3.3,   end: 8.67 },
+  showcase:    { start: 8.67,  end: 17.44 },
+  solutions:   { start: 17.44, end: 23.59 },
+  brand:       { start: 23.59, end: 31.8 },
 };
 ```
 
@@ -98,14 +105,15 @@ in/out animation, so boundaries can move freely as long as they stay ordered.
 
 ```ts
 BEATS.brand = {
-  whiteWipe: 0.0,   // = 24.0s absolute
-  logoIn:    0.35,  // = 24.35s
-  headline:  1.4,   // = 25.4s
-  ctaButton: 2.2,   // = 26.2s
-  ctaLabel:  3.0,   // = 27.0s  (www.abrarit.com wipes in)
-  tagline:   3.6,   // = 27.6s
-  whatsapp:  1.9,   // = 25.9s
-  hold:      4.4,   // = 28.4s
+  whiteWipe:  0.0,   // = 23.59s absolute
+  logoIn:     0.31,  // = 23.90s  ← measured phrase onset
+  headline:   1.3,   // = 24.89s
+  whatsapp:   2.6,   // = 26.19s
+  ctaButton:  3.4,   // = 26.99s
+  ctaLabel:   3.99,  // = 27.58s  ← measured phrase onset
+  logoAccent: 6.01,  // = 29.60s  ← measured phrase onset
+  tagline:    6.83,  // = 30.42s  ← measured phrase onset
+  hold:       7.4,   // = 30.99s
 };
 ```
 
@@ -116,63 +124,69 @@ together.
 
 ---
 
-## 4. Adding your own audio later
+## 4. How the cut is synced to the voice-over
 
-The composition is silent on purpose — there is no `<Audio>` anywhere in the
-tree, and nothing about rendering depends on an audio file existing.
-
-### Option A — mux the audio in afterwards (recommended, no code changes)
-
-```bash
-# Keep the rendered video exactly as-is, attach the narration:
-ffmpeg -i out/abrar-it-promo-30s.mp4 -i my-voiceover.mp3 \
-  -c:v copy -c:a aac -b:a 192k -shortest \
-  out/abrar-it-promo-30s-with-audio.mp4
-```
-
-`-shortest` cuts the result at whichever track ends first.
-
-To nudge the narration later by e.g. 0.4s, or trim its head:
-
-```bash
-# delay the audio by 400 ms
-ffmpeg -i out/abrar-it-promo-30s.mp4 -i my-voiceover.mp3 \
-  -filter_complex "[1:a]adelay=400|400[a]" -map 0:v -map "[a]" \
-  -c:v copy -c:a aac -b:a 192k -shortest out/final.mp4
-
-# start the narration 0.8s into the file instead
-ffmpeg -i out/abrar-it-promo-30s.mp4 -ss 0.8 -i my-voiceover.mp3 \
-  -map 0:v -map 1:a -c:v copy -c:a aac -b:a 192k -shortest out/final.mp4
-```
-
-### Option B — scrub against the audio inside Remotion Studio
-
-Drop the file in `public/` and add an `<Audio>` to the composition **while you
-work**, so the studio timeline shows a waveform to align against:
+`public/voiceover.mp3` (31.791 s) is mounted on the composition:
 
 ```tsx
 // remotion/AbrarITPromo.tsx
-import { Audio, staticFile } from "remotion";
-// ...inside <AbsoluteFill>, as the first child:
 <Audio src={staticFile("voiceover.mp3")} />
 ```
 
-Run `npm run video:studio`, scrub, and move the numbers in
-`remotion/timeline.ts` until the beats sit on the words. **Remove the `<Audio>`
-line before rendering** if you want the silent master back, or leave it in and
-Remotion will mux the audio into the MP4 for you.
+Remotion muxes it into the MP4 during the render, so no separate ffmpeg step is
+needed.
 
-### If your narration is longer than 30 s
+### Where the timings came from
 
-A longer voice-over does not have to be trimmed. Either:
+`remotion/audioMarkers.ts` holds measurements, not guesses. The file was decoded
+to 16 kHz mono PCM and the RMS of every 20 ms frame computed; a frame counts as
+speech above −34 dBFS relative to the track peak, gaps under 140 ms are bridged
+and blips under 100 ms dropped. That yields **15 speech phrases** and **4 pauses
+of 0.4 s or longer** — the sentence breaks at **3.30 s, 8.67 s, 17.44 s and
+23.59 s**, which is exactly where the scene boundaries now sit.
 
-* stretch the film — set `TOTAL_SECONDS` to the audio length (e.g. `31.8`) and
-  push the later scene boundaries out to match, so the composition becomes
-  `round(31.8 × 30) = 954` frames; or
-* keep the 30 s master for ad placements that cap at 30 s and trim the audio
-  tail with `-t 30`.
+Inside each scene, the headline and label reveals are pinned to phrase onsets.
+The three feature labels in scene 3 land on three consecutive phrases of near
+identical length (1.66 s / 1.70 s / 1.30 s at 12.10 s, 14.06 s and 15.90 s) —
+the signature of a spoken three-item list.
 
----
+### What is measured and what is inferred
+
+Measured: every phrase boundary, every pause, the track length.
+
+Inferred: **which words are in which phrase.** The audio was not transcribed —
+`huggingface.co` is blocked in this environment, so no speech-to-text model
+could be downloaded. The mapping of storyboard copy onto phrases comes from the
+storyboard structure matching the measured phrase structure, which it does
+closely, but it has not been verified against the script.
+
+To make it exact, open the script used to generate the voice-over, find the
+timestamp of the word a reveal should land on, subtract that scene's `start`,
+and put the result in the corresponding `BEATS` entry.
+
+### Swapping in a different voice-over
+
+1. Replace `public/voiceover.mp3`.
+2. Re-measure the phrases (the method is documented at the top of
+   `remotion/audioMarkers.ts`) and update `PHRASES` / `SENTENCE_BREAKS`.
+3. Set `TOTAL_SECONDS` to the new length and move the `SCENES` boundaries onto
+   the new sentence breaks.
+4. Nudge `BEATS` onto the new phrase onsets.
+
+### Scrubbing against the waveform
+
+`npm run video:studio` shows the audio waveform under the frame timeline. Drag
+the playhead to a word, read the frame number, divide by 30 for seconds,
+subtract the scene `start`, and that is the beat value.
+
+### Rendering a silent master
+
+```bash
+npm run video:render:silent     # same composition, --muted, no audio stream
+```
+
+Or remove the `<Audio>` line from `remotion/AbrarITPromo.tsx`; nothing else
+depends on the audio file existing.
 
 ## 5. Project structure
 
@@ -188,6 +202,7 @@ remotion/
   theme.ts                    colours, fonts, easings, springs, shadows
   brand.ts                    brand copy, logo path, WHATSAPP_URL
   fonts.ts                    local woff2 loader (delayRender-safe)
+  audioMarkers.ts             measured speech phrases from the voice-over
   anim.ts                     prog / springAt / osc helpers
   ribbonGeometry.ts           tapered calligraphic ribbon maths
 
@@ -212,6 +227,7 @@ remotion/
 
 public/
   abrar-it-logo.png           the supplied original logo
+  voiceover.mp3               the narration the cut is synced to
   fonts/Inter-Variable.woff2  fonts/Manrope-Variable.woff2
 ```
 

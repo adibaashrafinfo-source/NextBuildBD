@@ -168,7 +168,7 @@ export const Scene01Hook: React.FC = () => {
         </div>
       </AbsoluteFill>
 
-      <LightSweep delay={B("outro") + 2} duration={22} intensity={0.85} />
+      <LightSweep delay={B("outro")} duration={total - B("outro")} intensity={0.85} />
     </AbsoluteFill>
   );
 };

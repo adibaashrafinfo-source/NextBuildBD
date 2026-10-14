@@ -1,4 +1,4 @@
-import { AbsoluteFill, Sequence } from "remotion";
+import { AbsoluteFill, Audio, Sequence, staticFile } from "remotion";
 import { COLORS, FONTS } from "./theme";
 import { sceneSequence } from "./timeline";
 import { BackgroundCanvas } from "./components/BackgroundCanvas";
@@ -10,11 +10,14 @@ import { Scene04Solutions } from "./scenes/Scene04Solutions";
 import { Scene05BrandCTA } from "./scenes/Scene05BrandCTA";
 
 /**
- * The 30-second Abrar IT promo.
+ * The Abrar IT promo, cut to the voice-over in public/voiceover.mp3.
  *
- * Silent by design — there is no <Audio> anywhere in the tree, so the rendered
- * MP4 carries no audio track and the timeline is free to be synced to an
- * external voice-over later (see remotion/timeline.ts and VIDEO.md).
+ * Scene boundaries sit in the measured pauses between spoken sentences and the
+ * text reveals land on measured phrase onsets — see remotion/audioMarkers.ts
+ * for the measurements and remotion/timeline.ts for the cues they drive.
+ *
+ * Remove the <Audio> below to render the silent master again; nothing else
+ * depends on the audio file existing.
  */
 export const AbrarITPromo: React.FC = () => (
   <AbsoluteFill
@@ -25,6 +28,8 @@ export const AbrarITPromo: React.FC = () => (
       WebkitFontSmoothing: "antialiased",
     }}
   >
+    <Audio src={staticFile("voiceover.mp3")} />
+
     <BackgroundCanvas />
     <OrangeParticles count={28} seed="abrar-it" intensity={1} />
 

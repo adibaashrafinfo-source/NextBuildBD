@@ -72,6 +72,7 @@ export const Scene05BrandCTA: React.FC = () => {
         headlineDelay={B("headline")}
         ctaDelay={B("ctaButton")}
         ctaLabelDelay={B("ctaLabel")}
+        logoAccentDelay={B("logoAccent")}
         taglineDelay={B("tagline")}
       />
 

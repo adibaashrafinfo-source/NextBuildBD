@@ -12,6 +12,8 @@ export type FinalBrandCTAProps = {
   ctaDelay: number;
   /** Frame the URL inside the button reveals. */
   ctaLabelDelay: number;
+  /** Frame the logo pulses back to life on a later beat. */
+  logoAccentDelay?: number;
   taglineDelay: number;
 };
 
@@ -21,6 +23,7 @@ export const FinalBrandCTA: React.FC<FinalBrandCTAProps> = ({
   headlineDelay,
   ctaDelay,
   ctaLabelDelay,
+  logoAccentDelay,
   taglineDelay,
 }) => {
   const frame = useCurrentFrame();
@@ -50,7 +53,13 @@ export const FinalBrandCTA: React.FC<FinalBrandCTAProps> = ({
         gap: 0,
       }}
     >
-      <LogoReveal width={660} delay={logoDelay} duration={32} style={{ marginBottom: 64 }} />
+      <LogoReveal
+        width={660}
+        delay={logoDelay}
+        duration={32}
+        accentDelay={logoAccentDelay}
+        style={{ marginBottom: 64 }}
+      />
 
       <AnimatedHeadline
         lines={[{ text: COPY.brand.headline }]}

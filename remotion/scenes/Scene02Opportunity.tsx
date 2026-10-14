@@ -151,7 +151,7 @@ export const Scene02Opportunity: React.FC = () => {
           fontSize={72}
           lineHeight={1.09}
           wordStagger={3.6}
-          accentSweep={{ line: 1, delay: B("headlineLine2") + 18, duration: 28, width: 620 }}
+          accentSweep={{ line: 1, delay: B("accentSweep"), duration: 28, width: 620 }}
         />
       </div>
 

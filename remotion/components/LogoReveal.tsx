@@ -10,6 +10,11 @@ export type LogoRevealProps = {
   delay?: number;
   /** Frames the mask wipe takes. */
   duration?: number;
+  /**
+   * Frame of an optional second accent: a restrained scale-and-glow pulse used
+   * to put the lock-up back on a later beat of the narration.
+   */
+  accentDelay?: number;
   style?: CSSProperties;
 };
 
@@ -23,6 +28,7 @@ export const LogoReveal: React.FC<LogoRevealProps> = ({
   width,
   delay = 0,
   duration = 30,
+  accentDelay,
   style,
 }) => {
   const frame = useCurrentFrame();
@@ -31,6 +37,12 @@ export const LogoReveal: React.FC<LogoRevealProps> = ({
   const height = width / BRAND.logoAspect;
   const wipe = prog(frame, delay, duration, EASE.inOut);
   const settle = springAt({ frame, fps, delay: delay + 4, config: SPRINGS.soft });
+
+  // Rises and falls over ~0.8s; nothing moves when accentDelay is unset.
+  const accent =
+    accentDelay === undefined
+      ? 0
+      : prog(frame, accentDelay, 9, EASE.out) - prog(frame, accentDelay + 9, 15, EASE.inOut);
 
   if (wipe <= 0) {
     return null;
@@ -42,10 +54,24 @@ export const LogoReveal: React.FC<LogoRevealProps> = ({
         position: "relative",
         width,
         height,
-        transform: `scale(${1.035 - settle * 0.035})`,
+        transform: `scale(${1.035 - settle * 0.035 + accent * 0.022})`,
         ...style,
       }}
     >
+      {accent > 0.004 ? (
+        <div
+          style={{
+            position: "absolute",
+            inset: "-18%",
+            borderRadius: "50%",
+            background:
+              "radial-gradient(50% 50% at 50% 50%, rgba(241,89,34,0.17) 0%, rgba(241,89,34,0) 70%)",
+            opacity: accent,
+            pointerEvents: "none",
+          }}
+        />
+      ) : null}
+
       <div
         style={{
           position: "absolute",
